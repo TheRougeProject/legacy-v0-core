@@ -1,0 +1,13 @@
+{
+  "name": "Rouge-Coupon-Demo",
+  "version": "0.0.1",
+  "description": "The Rouge Project coupon platform demo",
+  "main": "",
+  "keywords": [
+    "ethereum", "coupon"
+  ],
+  "authors": [
+      "Valentin D. Guillois <vdg@rouge.network>"
+  ],
+  "license": "AGPL",
+}
