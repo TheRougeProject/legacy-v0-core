@@ -30,6 +30,7 @@ contract CouponExample is StandardCoupon {
 
     string public name;
     string public version = 'v0.1';
+
     uint8 public termDiscount;
 
     function CouponExample (
@@ -37,10 +38,12 @@ contract CouponExample is StandardCoupon {
         uint256 _initialSupply,
         uint8 _termDiscount
         ) {
-      issuer = msg.sender;
+      require(_initialSupply > 0); /* hard cap limitation rules TBD */
+      creator = msg.sender;
       name = _name;
       termDiscount = _termDiscount;
-      totalFree = _initialSupply;
+      totalCoupon = _initialSupply;
+      totalFreeCoupon = _initialSupply;
     }
 
 }

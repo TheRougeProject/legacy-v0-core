@@ -31,10 +31,12 @@ pragma solidity ^0.4.12;
 
 import "./Coupon.sol";
 
+/* rename CouponCampaign ? */
+
 contract StandardCoupon is Coupon {
 
   /* 
-     todo ? struct Authority to replace issuer in some meta task ..
+     TODO ? struct Authority to replace issuer in some meta task ..
   */
 
   enum States { Created, Issued, Expired, Archived }
@@ -59,26 +61,25 @@ contract StandardCoupon is Coupon {
       issuance is locking RGE futur bying (in eth)
    */
 
-  address issuer; /* Issuer has been set up at the contract creation */
+  address public creator; /* Creator is set up at the contract creation */
+  address public issuer; /* Issuer is now always same as creator */
 
   /* set up some parameters like expiration at issuance ? */
   
-  function issue() atState(States.Created) onlyBy(issuer) {
-    state = States.Issued;
+  function issue() atState(States.Created) onlyBy(creator) {
+     state = States.Issued;
+     issuer = creator; 
   }
 
-  uint256 totalFree;
-  uint256 totalAcquired = 0;
-  uint256 totalRedeemed = 0;
+  uint256 public totalCoupon;
+  uint256 public totalFreeCoupon;
+  uint256 public totalAcquiredCoupon = 0; /* duplicate info */
+  uint256 public totalRedeemedCoupon = 0;
   
   /* ********** ********** ********** */
   /* the acquisition Register (track coupons effectively distributed to Users) */
   
   mapping (address => bool) acquisitionRegister;
-
-  function freeCouponSupply() constant returns (uint256 free) {
-    return totalFree;
-  }
 
   function hasCoupon(address _user) constant returns (bool yes) {
     require(_user != issuer); /* SI_10 issuer is excluded for now to simplify tests */
@@ -88,9 +89,9 @@ contract StandardCoupon is Coupon {
   function distributeCoupon(address _to) atState(States.Issued) private returns (bool success) {
     require(_to != issuer); /* SI_10 issuer is excluded for now to simplify tests */
     require(!hasCoupon(_to));
-    if (totalFree > 0) {
-      totalFree -= 1;
-      totalAcquired += 1;
+    if (totalFreeCoupon > 0) {
+      totalFreeCoupon -= 1;
+      totalAcquiredCoupon += 1;
       acquisitionRegister[_to] = true;
       return true;
     } else {
@@ -130,14 +131,14 @@ contract StandardCoupon is Coupon {
 
   function hasRedeemed(address _user) constant returns (bool yes) {
     require(_user != issuer);
+    require(hasCoupon(_user));
     return redemptionRegister[_user];
   }
 
   function redeemCoupon(address _user) atState(States.Issued) private returns (bool success) {
     require(_user != issuer); /* SI_10 issuer is excluded for now to simplify tests */
-    require(hasCoupon(_user));
     require(!hasRedeemed(_user));
-    totalRedeemed += 1;
+    totalRedeemedCoupon += 1;
     redemptionRegister[_user] = true;
     return true;
   }
