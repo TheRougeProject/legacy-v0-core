@@ -17,8 +17,7 @@
 
     ***************************************************
 
-  WARNING : EXPERIMENTAL and NON AUDITED code.
-  only use for tests purpose (on a testnet!)
+  WARNING : EXPERIMENTAL ALPHA code.
 
   This is main contract that encapsule the coupon workflow logic
 
@@ -27,7 +26,10 @@
 
 
 */
-pragma solidity ^0.4.12;
+
+pragma solidity ^0.4.23;
+
+import "./RegistryInterface.sol";
 
 import "./Coupon.sol";
 
@@ -64,11 +66,17 @@ contract StandardCoupon is Coupon {
   address public creator; /* Creator is set up at the contract creation */
   address public issuer; /* Issuer is now always same as creator */
 
+  address constant registry = 0xdb331368bAb3492CF366Fdc8Eb83356B40838a55;
+
   /* set up some parameters like expiration at issuance ? */
   
   function issue() atState(States.Created) onlyBy(creator) {
      state = States.Issued;
      issuer = creator; 
+
+     RegistryInterface _reg = RegistryInterface(registry);
+     _reg.add_campaign(this);
+
   }
 
   uint256 public totalCoupon;
@@ -88,7 +96,7 @@ contract StandardCoupon is Coupon {
 
   function distributeCoupon(address _to) atState(States.Issued) private returns (bool success) {
     require(_to != issuer); /* SI_10 issuer is excluded for now to simplify tests */
-    require(!hasCoupon(_to));
+    require(!hasCoupon(_to)); /* only one coupon per address (but not user) */
     if (totalFreeCoupon > 0) {
       totalFreeCoupon -= 1;
       totalAcquiredCoupon += 1;

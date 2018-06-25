@@ -1,6 +1,7 @@
 /*
     The Rouge Project - Blochain Coupon platform
     Copyright (C) 2017 Valentin D. Guillois <vdg@rouge.network>
+    Copyright (C) 2017 Christophe Le Bars <clb@rouge.network>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as
@@ -17,14 +18,12 @@
 
     ***************************************************
 
-  WARNING : EXPERIMENTAL and NON AUDITED code.
-  only use for tests purpose (on a testnet!)
-
 */
 
 import "./StandardCoupon.sol";
 
 pragma solidity ^0.4.12;
+
 
 contract CouponExample is StandardCoupon {
 
