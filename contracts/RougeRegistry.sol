@@ -1,9 +1,9 @@
 
 pragma solidity ^0.4.23;
 
-import "./RegistryInterface.sol";
+import "./RougeRegistryInterface.sol";
 
-contract CouponDemoRegistry is RegistryInterface {
+contract RougeRegistry is RougeRegistryInterface {
 
     string public version = 'v0.2';
 
@@ -16,22 +16,17 @@ contract CouponDemoRegistry is RegistryInterface {
     mapping (address => bool) public is_campaign;
     mapping (address => address[]) campaigns;
 
-    modifier onlyBy(address _account) {
-        require(msg.sender == _account);
-        _;
-    }
-    
     constructor() public {
         owner = msg.sender;
     }
 
-    function add_campaign(address _a) public {
-        if (!is_issuer[msg.sender]) {
-            is_issuer[msg.sender] = true;
-            issuers.push(msg.sender);
+    function add_campaign(address _issuer, address _a) internal {
+        if (!is_issuer[_issuer]) {
+            is_issuer[_issuer] = true;
+            issuers.push(_issuer);
         }
         all_campaigns.push(_a);
-        campaigns[msg.sender].push(_a);
+        campaigns[_issuer].push(_a);
         is_campaign[_a] = true;
     }
 
