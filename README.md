@@ -5,8 +5,6 @@ decide to use this code on the Ethereum mainnet. You may lose your RGE deposit.
 
 WARNING : this NON AUDITED code. Use on testnet or with extreme caution.
 
-This version contains very preliminary skeleton for coupons that are managed on the Ethereum blockchain.
-
 The project use the truffle framework (http://truffleframework.com/)
 
 ## How to run tests :
