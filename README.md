@@ -1,8 +1,9 @@
-# The Rouge Project - experimental code for the demo coupon platform
+# The Rouge Project - beta code factory and campaign contracts to be used with the RGE token
 
-This repository contains Solidity smart contract code about the coupon platform built by the Rouge Project.
+The Rouge token [RGE] has be audited but not yet the factory. Please do your own due diligences if you
+decide to use this code on the Ethereum mainnet. You may lose your RGE deposit.
 
-WARNING : this is EXPERIMENTAL and NON AUDITED code. ONLY use for TESTS purpose (on a testnet!)
+WARNING : this NON AUDITED code. Use on testnet or with extreme caution.
 
 This version contains very preliminary skeleton for coupons that are managed on the Ethereum blockchain.
 

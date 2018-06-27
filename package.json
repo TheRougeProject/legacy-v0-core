@@ -1,13 +1,14 @@
 {
-  "name": "Rouge-Coupon-Demo",
-  "version": "0.0.1",
-  "description": "The Rouge Project coupon platform demo",
+  "name": "Rouge-Protocol",
+  "version": "0.4.3",
+  "description": "The Rouge Project - Note and Voucher Protocol",
   "main": "",
   "keywords": [
-    "ethereum", "coupon"
+    "ethereum", "coupon", "voucher", "ticket"
   ],
   "authors": [
-      "Valentin D. Guillois <vdg@rouge.network>"
+    "Christophe Le Bars <clbg@rouge.network>",
+    "Valentin D. Guillois <vdg@rouge.network>"
   ],
   "license": "AGPL",
 }
