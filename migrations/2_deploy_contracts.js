@@ -19,7 +19,7 @@ module.exports = async function(deployer) {
 
   results = await Promise.all([
     rge.setFactory(factory.address),
-    factory.setParams(rge.address)
+    factory.setParams(rge.address,100000)
   ]);
 
 };

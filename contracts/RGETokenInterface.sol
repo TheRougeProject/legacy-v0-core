@@ -8,8 +8,10 @@ pragma solidity ^0.4.23;
 
 import "./EIP20Interface.sol";
 
-contract RGEToken is EIP20Interface {
+contract RGETokenInterface is EIP20Interface {
     
+    mapping (address => uint256) public balances;
+
     string public name;
     string public symbol;
     uint8 public decimals;

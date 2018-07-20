@@ -15,8 +15,9 @@ import "./RougeRegistry.sol";
 contract RougeFactory is RougeRegistry {
     
     // The Rouge Token contract address
-    RGEToken public rge;
-
+    RGETokenInterface public rge;
+    uint256 public tare;
+    
     address owner;
 
     mapping (address => uint256) public deposit; // per campaign ... 
@@ -30,15 +31,16 @@ contract RougeFactory is RougeRegistry {
         _;
     }
 
-    function setParams ( address _rge ) onlyBy(owner) public {
-        rge = RGEToken(_rge);
+    function setParams (address _rge, uint256 _tare) onlyBy(owner) public {
+        rge = RGETokenInterface(_rge); 
+        tare = _tare;
     }
 
     event NewRougeCampaign(address issuer, address campaign, uint32 _issuance);
 
     function createCampaign(address _issuer, uint32 _issuance, uint256 _tokens) public {
 
-        SimpleRougeCampaign c = new SimpleRougeCampaign(_issuer, _issuance, rge, this);
+        SimpleRougeCampaign c = new SimpleRougeCampaign(_issuer, _issuance, rge, tare, this);
 
         // XXX no need to check rge set ? transfer would revert ...
         rge.transfer(c, _tokens);     // transfer tokens to the campaign contract ...

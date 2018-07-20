@@ -6,15 +6,20 @@
 
 pragma solidity ^0.4.23;
 
-import "./RGEInterface.sol";
+import "./RGETokenInterface.sol";
+
+import "./RougeFactoryInterface.sol";
 
 contract SimpleRougeCampaign {
 
     string public version = 'v0.7';
 
     // The Rouge Token contract address
-    RGEToken public rge;
-    address public factory;
+    RGETokenInterface public rge;
+
+    // Factory address & tare settings (1 RGE)
+    RougeFactoryInterface public factory;
+    uint256 public tare;
 
     address issuer; // XXX todo owner = initial potential issuer, issuer can be changed ?
 
@@ -28,11 +33,12 @@ contract SimpleRougeCampaign {
     uint32 public acquired = 0;
     uint32 public redeemed = 0;
 
-    constructor(address _issuer, uint32 _issuance, address _rge, address _factory) public {
+    constructor(address _issuer, uint32 _issuance, address _rge, uint256 _tare, address _factory) public {
         issuer = _issuer;
         issuance = _issuance;
-        rge = RGEToken(_rge); 
-        /* factory = RougeFactory(_factory); */
+        rge = RGETokenInterface(_rge); 
+        tare = _tare;
+        factory = RougeFactoryInterface(_factory);
     }
 
     string public name;
@@ -41,7 +47,9 @@ contract SimpleRougeCampaign {
 
     function issue(string _name, uint _campaignExpiration) onlyBy(issuer) public {
 
-        // XXX check if campaign as any RGE , fail otherwise
+        // still possible to send RGE post creation, before issuing the campaign
+        uint256 rgeBalance = rge.balanceOf(this);
+        require(rgeBalance > issuance * tare);
 
         name = _name;
         campaignIssued = true;
@@ -75,8 +83,8 @@ contract SimpleRougeCampaign {
     }
 
     function distributeNote(address _to) CampaignOpen private returns (bool success) {
-        require(_to != issuer);                 /* RULE issuer and bearer need to be diffrent */
-        require(!hasNote(_to));                 /* RULE only one note per address (but not bearer) */
+        require(_to != issuer);                 /* RULE: issuer and bearer need to be diffrent */
+        require(!hasNote(_to));                 /* RULE: only one note per address (but not bearer) */
         if (available > 0) {
             available -= 1;
             acquired += 1;
@@ -134,13 +142,15 @@ contract SimpleRougeCampaign {
         return redeemNote(msg.sender);
     }
     
-    function letsBurn(uint256 _value) onlyBy(issuer) public {
-        
-        rge.burn(_value);
-        
-    }    
+    /* function letsBurn(uint256 _value) onlyBy(issuer) public { */
+    /*     rge.burn(_value); */
+    /* }     */
 
     function kill() onlyBy(issuer) public {
+
+        // burn the tare
+
+        rge.burn(tare * (issuance - redeemed));
 
         // transfer all remaining tokens and ETH to the issuer
         

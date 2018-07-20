@@ -7,18 +7,12 @@ contract RougeRegistry is RougeRegistryInterface {
 
     string public version = 'v0.2';
 
-    address owner; 
-
     address[] issuers;
     address[] all_campaigns;
     
     mapping (address => bool) public is_issuer;
     mapping (address => bool) public is_campaign;
     mapping (address => address[]) campaigns;
-
-    constructor() public {
-        owner = msg.sender;
-    }
 
     function add_campaign(address _issuer, address _a) internal {
         if (!is_issuer[_issuer]) {

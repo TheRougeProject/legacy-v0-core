@@ -1,12 +1,14 @@
 /*
 
-  Same interface as RGEToken but for test purpose only
+  Same interface/code as RGEToken but for test purpose only
+
+  with a giveMeRGE faucet like function...
 
 */
 
-import "./EIP20.sol";
-
 pragma solidity ^0.4.23;
+
+import "./EIP20.sol";
 
 contract TestRGEToken is EIP20 {
     
@@ -32,7 +34,7 @@ contract TestRGEToken is EIP20 {
         balances[owner] = totalSupply;
     }
     
-    function giveMeRGE(uint32 _value) public returns (bool success) {
+    function giveMeRGE(uint256 _value) public returns (bool success) {
         require(balances[owner] >= _value);
         balances[owner] -= _value;
         balances[msg.sender] += _value;
