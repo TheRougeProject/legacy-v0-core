@@ -41,7 +41,7 @@ contract RougeFactory is RougeRegistry {
     function createCampaign(address _issuer, uint32 _issuance, uint256 _tokens) public {
 
         SimpleRougeCampaign c = new SimpleRougeCampaign(_issuer, _issuance, rge, tare, this);
-
+        
         // XXX no need to check rge set ? transfer would revert ...
         rge.transfer(c, _tokens);     // transfer tokens to the campaign contract ...
 

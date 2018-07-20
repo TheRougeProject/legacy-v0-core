@@ -49,8 +49,10 @@ contract SimpleRougeCampaign {
 
         // still possible to send RGE post creation, before issuing the campaign
         uint256 rgeBalance = rge.balanceOf(this);
-        require(rgeBalance > issuance * tare);
+        require(rgeBalance >= issuance * tare);
 
+        // TODO XXX limit expiration to now + 3 months ?
+        
         name = _name;
         campaignIssued = true;
         campaignExpiration = _campaignExpiration;
@@ -121,37 +123,48 @@ contract SimpleRougeCampaign {
         require(hasNote(_bearer));
         return redemptionRegister[_bearer];
     }
-    
+
+    event Redeem(address indexed bearer);
+
     function redeemNote(address _bearer) CampaignOpen private returns (bool success) {
         require(_bearer != issuer); 
         require(!hasRedeemed(_bearer));
         redeemed += 1;
         redemptionRegister[_bearer] = true;
+        emit Redeem(_bearer);
         return true;
     }
-    
-    function useNote() CampaignOpen public returns (bool success) {
-        require(msg.sender != issuer); /* SI_10 issuer is excluded for now to simplify tests */
+
+    // web3.eth.sign compat prefix
+    function prefixed(bytes32 hash) internal pure returns (bytes32) {
+        return keccak256("\x19Ethereum Signed Message:\n32", hash);
+    }
+
+    // _hash is any hashed msg agreed between issuer and bearer
+    // WARNING: replay protection not implemented at protocol level
+    function acceptRedemption(address _bearer, bytes32 _hash, uint8 v, bytes32 r, bytes32 s)
+        CampaignOpen onlyBy(issuer) public returns (bool success) {
+
+        bytes32 message = prefixed(_hash);
+
+        require(ecrecover(message, v, r, s) == _bearer);
+
+        return redeemNote(_bearer);
+    }
         
-        /* TODO global contract expiration test => if expired change state  */
-        
-        /* TODO send to checkout contract => return always ok in these tests (could put conditions on pos/target)
-           require approval from issuer 
-        */
-        
+    function confirmRedemption(bytes32 _hashmsg, uint8 v, bytes32 r, bytes32 s) CampaignOpen public returns (bool success) {
+        require(ecrecover(_hashmsg, v, r, s) == issuer);
         return redeemNote(msg.sender);
     }
-    
-    /* function letsBurn(uint256 _value) onlyBy(issuer) public { */
-    /*     rge.burn(_value); */
-    /* }     */
-
+        
     function kill() onlyBy(issuer) public {
 
-        // burn the tare
+        // burn the tare for unredeemed notes if campaign has started
 
-        rge.burn(tare * (issuance - redeemed));
-
+        if (campaignIssued) {
+            rge.burn(tare * (issuance - redeemed));
+        }
+        
         // transfer all remaining tokens and ETH to the issuer
         
         uint256 rgeBalance = rge.balanceOf(this);

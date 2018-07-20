@@ -1,9 +1,9 @@
 # The Rouge Project - beta code factory and campaign contracts to be used with the RGE token
 
-The Rouge token [RGE] has be audited but not yet the factory. Please do your own due diligences if you
+WARNING: The Rouge token [RGE] has been audited but not yet the factory. Please do your own due diligences if you
 decide to use this code on the Ethereum mainnet. You may lose your RGE deposit.
 
-WARNING : this NON AUDITED code. Use on testnet or with extreme caution.
+WARNING : this is NON AUDITED code. Use on testnet or with extreme caution.
 
 The project use the truffle framework (http://truffleframework.com/)
 
@@ -22,7 +22,23 @@ The project use the truffle framework (http://truffleframework.com/)
   truffle test
 ```
 
-That's all for now...
+## Creating a campaign :
+
+1. You should have a minimum of RGE tokens on the Ethereum address creating the campaign (issuer) :
+
+   mim RGE = number of notes to be issued * tare price.
+
+The tare price is now set to be 0.1 RGE (as per the white paper, tare will be raised to 1 RGE as usage of
+the network grow).
+
+2. Call the function newCampaign(issuance, deposit)
+
+   issuance = number of notes to be created/issued
+
+   deposit = RGE that you move to the campaign as deposit (should equal or more than mim RGE)
+
+3. Enjoy :)
+
 
 ### Licensed under GNU AFFERO GENERAL PUBLIC LICENSE v3
 
