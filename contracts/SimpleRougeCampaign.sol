@@ -41,6 +41,11 @@ contract SimpleRougeCampaign {
         factory = RougeFactoryInterface(_factory);
     }
 
+    // web3.eth.sign compat prefix XXX mv to lib
+    function prefixed(bytes32 hash) internal pure returns (bytes32) {
+        return keccak256("\x19Ethereum Signed Message:\n32", hash);
+    }
+
     string public name;
     bool public campaignIssued;
     uint public campaignExpiration;
@@ -51,7 +56,9 @@ contract SimpleRougeCampaign {
         uint256 rgeBalance = rge.balanceOf(this);
         require(rgeBalance >= issuance * tare);
 
-        // TODO XXX limit expiration to now + 3 months ?
+        // minimum campaign duration 1 day, maximum 120 days
+        require(_campaignExpiration >= now + 60*60*24);
+        require(_campaignExpiration <= now + 60*60*24*120);
         
         name = _name;
         campaignIssued = true;
@@ -65,9 +72,6 @@ contract SimpleRougeCampaign {
         require(now < campaignExpiration);
         _;
     }
-    
-    /* ********** ********** ********** */
-    /* the acquisition Register (track if an address has a note) XXX to replace by Int ? */
     
     mapping (address => bool) acquisitionRegister;
     
@@ -135,25 +139,18 @@ contract SimpleRougeCampaign {
         return true;
     }
 
-    // web3.eth.sign compat prefix
-    function prefixed(bytes32 hash) internal pure returns (bytes32) {
-        return keccak256("\x19Ethereum Signed Message:\n32", hash);
-    }
-
     // _hash is any hashed msg agreed between issuer and bearer
     // WARNING: replay protection not implemented at protocol level
     function acceptRedemption(address _bearer, bytes32 _hash, uint8 v, bytes32 r, bytes32 s)
         CampaignOpen onlyBy(issuer) public returns (bool success) {
-
         bytes32 message = prefixed(_hash);
-
         require(ecrecover(message, v, r, s) == _bearer);
-
         return redeemNote(_bearer);
     }
         
-    function confirmRedemption(bytes32 _hashmsg, uint8 v, bytes32 r, bytes32 s) CampaignOpen public returns (bool success) {
-        require(ecrecover(_hashmsg, v, r, s) == issuer);
+    function confirmRedemption(bytes32 _hash, uint8 v, bytes32 r, bytes32 s) CampaignOpen public returns (bool success) {
+        bytes32 message = prefixed(_hash);
+        require(ecrecover(message, v, r, s) == issuer);
         return redeemNote(msg.sender);
     }
         

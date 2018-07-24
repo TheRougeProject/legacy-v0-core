@@ -1,6 +1,6 @@
 
-var TestRGEToken = artifacts.require("./TestRGEToken.sol");
-var RougeFactory = artifacts.require("./RougeFactory.sol");
+const TestRGEToken = artifacts.require("./TestRGEToken.sol");
+const RougeFactory = artifacts.require("./RougeFactory.sol");
 
 module.exports = async function(deployer) {
  

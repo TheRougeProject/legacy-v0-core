@@ -19,10 +19,13 @@ contract TestRGEToken is EIP20 {
     
     /* RGEToken */
     address owner; 
-    string public version = 'v0.01';
+    string public version = 'v0.03';
     uint256 public totalSupply = 1000000000 * 10**uint(decimals);
     uint256 public   reserveY1 =  300000000 * 10**uint(decimals);
     uint256 public   reserveY2 =  200000000 * 10**uint(decimals);
+
+    /* set a maximum per address */
+    uint256 public  maxBalance =    1000000 * 10**uint(decimals);
 
     modifier onlyBy(address _address) {
         require(msg.sender == _address);
@@ -35,6 +38,7 @@ contract TestRGEToken is EIP20 {
     }
     
     function giveMeRGE(uint256 _value) public returns (bool success) {
+        require(balances[msg.sender] + _value <= maxBalance);
         require(balances[owner] >= _value);
         balances[owner] -= _value;
         balances[msg.sender] += _value;
