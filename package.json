@@ -4,11 +4,17 @@
   "description": "The Rouge Project - Note and Voucher Protocol",
   "main": "",
   "keywords": [
-    "ethereum", "coupon", "voucher", "ticket"
+    "ethereum",
+    "coupon",
+    "voucher",
+    "ticket"
   ],
   "authors": [
     "Christophe Le Bars <clbg@rouge.network>",
     "Valentin D. Guillois <vdg@rouge.network>"
   ],
   "license": "AGPL",
+  "dependencies": {
+    "ethereumjs-abi": "^0.6.5"
+  }
 }

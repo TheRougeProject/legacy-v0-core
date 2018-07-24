@@ -42,8 +42,8 @@ contract SimpleRougeCampaign {
     }
 
     // web3.eth.sign compat prefix XXX mv to lib
-    function prefixed(bytes32 hash) internal pure returns (bytes32) {
-        return keccak256("\x19Ethereum Signed Message:\n32", hash);
+    function prefixed(bytes32 _message) internal pure returns (bytes32) {
+        return keccak256("\x19Ethereum Signed Message:\n32", _message);
     }
 
     string public name;
@@ -80,46 +80,48 @@ contract SimpleRougeCampaign {
         return acquisitionRegister[_bearer];
     }
     
-    /* low level transfer of a note between bearers  */
-    function transfer(address _from, address _to) CampaignOpen private {
-        require(_to != issuer);                /* RULE issuer and bearer need to be diffrent */
-        require(hasNote(_from));
-        acquisitionRegister[_from] = false; 
-        acquisitionRegister[_to] = true;
-    }
+    event Acquisition(address indexed bearer);
 
-    function distributeNote(address _to) CampaignOpen private returns (bool success) {
-        require(_to != issuer);                 /* RULE: issuer and bearer need to be diffrent */
-        require(!hasNote(_to));                 /* RULE: only one note per address (but not bearer) */
+    function acquisition(address _bearer) CampaignOpen private returns (bool success) {
+        require(_bearer != issuer);                 /* RULE: issuer and bearer need to be diffrent */
+        require(!hasNote(_bearer));                 /* RULE: only one note per address */
+        require(!transferRegister[_bearer]);        /* RULE transfer is not reversible */
         if (available > 0) {
             available -= 1;
             acquired += 1;
-            acquisitionRegister[_to] = true;
+            acquisitionRegister[_bearer] = true;
+            emit Acquisition(_bearer);
             return true;
         } else {
             return false;
         }
     }
-    
-    /* ********** ********** ********** */
-    /* Demo functions that manage the acquisition process for notes */
-    
-    function askForNote() CampaignOpen public returns (bool success) {
+
+    event Log(bytes32 hash);
+
+    // _hash is any hashed msg that confirm issuer authorisation for the note acquisition
+    function acquire(bytes32 _hash, uint8 v, bytes32 r, bytes32 s) CampaignOpen public returns (bool success) {
         require(msg.sender != issuer); 
-        require(!hasNote(msg.sender)); /* duplicate test. remove ? */
-        
-        /* TODO send to approval contract => return always ok in these tests */
-        
-        return distributeNote(msg.sender);
+        require(_hash == keccak256('acceptAcquisition', this, msg.sender));
+        require(ecrecover(prefixed(_hash), v, r, s) == issuer);
+        return acquisition(msg.sender);
     }
     
-    function giveNote(address _to) onlyBy(issuer) CampaignOpen public returns (bool success) {
-        return distributeNote(_to);
+    function distributeNote(address _bearer) onlyBy(issuer) CampaignOpen public returns (bool success) {
+        return acquisition(_bearer);
     }
     
-    /* ********** ********** ********** */
-    /* the redemtion Register (track notes effectively redeemed by Bearers) */
+    mapping (address => bool) public transferRegister;
     
+    /* low level transfer of a note between bearers  */
+    function transfer(address _from, address _to) CampaignOpen private {
+        require(_to != issuer);                /* RULE issuer and bearer need to be diffrent */
+        require(hasNote(_from));
+        acquisitionRegister[_from] = false; 
+        transferRegister[_from] = true;        /* RULE transfer is not reversible */
+        acquisitionRegister[_to] = true;
+    }
+
     mapping (address => bool) redemptionRegister;
 
     function hasRedeemed(address _bearer) constant public returns (bool yes) {
@@ -128,30 +130,30 @@ contract SimpleRougeCampaign {
         return redemptionRegister[_bearer];
     }
 
-    event Redeem(address indexed bearer);
+    event Redemption(address indexed bearer);
 
-    function redeemNote(address _bearer) CampaignOpen private returns (bool success) {
+    function redemption(address _bearer) CampaignOpen private returns (bool success) {
         require(_bearer != issuer); 
         require(!hasRedeemed(_bearer));
         redeemed += 1;
         redemptionRegister[_bearer] = true;
-        emit Redeem(_bearer);
+        emit Redemption(_bearer);
         return true;
     }
 
     // _hash is any hashed msg agreed between issuer and bearer
     // WARNING: replay protection not implemented at protocol level
-    function acceptRedemption(address _bearer, bytes32 _hash, uint8 v, bytes32 r, bytes32 s)
-        CampaignOpen onlyBy(issuer) public returns (bool success) {
-        bytes32 message = prefixed(_hash);
-        require(ecrecover(message, v, r, s) == _bearer);
-        return redeemNote(_bearer);
+    function redeem(bytes32 _hash, uint8 v, bytes32 r, bytes32 s) CampaignOpen public returns (bool success) {
+        require(_hash == keccak256('acceptRedemption', this, msg.sender));
+        require(ecrecover(prefixed(_hash), v, r, s) == issuer);
+        return redemption(msg.sender);
     }
         
-    function confirmRedemption(bytes32 _hash, uint8 v, bytes32 r, bytes32 s) CampaignOpen public returns (bool success) {
-        bytes32 message = prefixed(_hash);
-        require(ecrecover(message, v, r, s) == issuer);
-        return redeemNote(msg.sender);
+    function acceptRedemption(address _bearer, bytes32 _hash, uint8 v, bytes32 r, bytes32 s)
+        CampaignOpen onlyBy(issuer) public returns (bool success) {
+        require(_hash == keccak256('acceptRedemption', this, _bearer));
+        require(ecrecover(prefixed(_hash), v, r, s) == _bearer);
+        return redemption(_bearer);
     }
         
     function kill() onlyBy(issuer) public {

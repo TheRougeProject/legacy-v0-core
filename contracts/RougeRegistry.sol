@@ -40,6 +40,10 @@ contract RougeRegistry is RougeRegistryInterface {
         return campaigns[issuer][index];
     }
    
+    function get_last_campaign(address issuer) public view returns(address) {
+        return campaigns[issuer][campaigns[issuer].length - 1];
+    }
+   
     function get_mycount() public view returns(uint count) {
         return campaigns[msg.sender].length;
     }
