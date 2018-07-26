@@ -12,16 +12,16 @@ import "./RougeFactoryInterface.sol";
 
 contract SimpleRougeCampaign {
 
-    string public version = 'v0.7';
+    string public version = 'v0.8';
 
     // The Rouge Token contract address
     RGETokenInterface public rge;
 
-    // Factory address & tare settings (1 RGE)
+    // Factory address & tare settings
     RougeFactoryInterface public factory;
     uint256 public tare;
 
-    address issuer; // XXX todo owner = initial potential issuer, issuer can be changed ?
+    address public issuer; // XXX todo ? owner != initial issuer
 
     modifier onlyBy(address _address) {
         require(msg.sender == _address);
@@ -46,11 +46,14 @@ contract SimpleRougeCampaign {
         return keccak256("\x19Ethereum Signed Message:\n32", _message);
     }
 
+    bytes4 public scheme;
     string public name;
     bool public campaignIssued;
     uint public campaignExpiration;
 
-    function issue(string _name, uint _campaignExpiration) onlyBy(issuer) public {
+    event Issuance(bytes4 scheme, string name, uint campaignExpiration);
+
+    function issue(bytes4 _scheme, string _name, uint _campaignExpiration) onlyBy(issuer) public {
 
         // still possible to send RGE post creation, before issuing the campaign
         uint256 rgeBalance = rge.balanceOf(this);
@@ -64,7 +67,10 @@ contract SimpleRougeCampaign {
         campaignIssued = true;
         campaignExpiration = _campaignExpiration;
         available = issuance;
-        
+        scheme = _scheme;
+
+        emit Issuance(_scheme, _name, _campaignExpiration);
+
     }    
 
     modifier CampaignOpen() {

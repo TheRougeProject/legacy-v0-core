@@ -36,16 +36,19 @@ contract RougeFactory is RougeRegistry {
         tare = _tare;
     }
 
-    event NewRougeCampaign(address issuer, address campaign, uint32 _issuance);
+    event NewCampaign(address issuer, address campaign, uint32 issuance);
 
     function createCampaign(address _issuer, uint32 _issuance, uint256 _tokens) public {
 
+        // only rge contract can call createCampaign
+        // require(msg.sender == address(rge));
+
         SimpleRougeCampaign c = new SimpleRougeCampaign(_issuer, _issuance, rge, tare, this);
-        
+
         // XXX no need to check rge set ? transfer would revert ...
         rge.transfer(c, _tokens);     // transfer tokens to the campaign contract ...
 
-        emit NewRougeCampaign(_issuer, c, _issuance);
+        emit NewCampaign(_issuer, c, _issuance);
 
         // XXX beta sugar getters / not stricly necessary...
         

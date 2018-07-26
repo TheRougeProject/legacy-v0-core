@@ -24,6 +24,8 @@ contract RGETokenInterface is EIP20Interface {
 
     address public factory;
 
+    function setFactory(address _factory) public;
+
     function newCampaign(uint32 _issuance, uint256 _value) public;
 
     event Burn(address indexed burner, uint256 value);
