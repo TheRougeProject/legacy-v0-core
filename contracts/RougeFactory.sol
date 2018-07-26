@@ -14,6 +14,8 @@ import "./RougeRegistry.sol";
 
 contract RougeFactory is RougeRegistry {
     
+    string public version = '0.8';
+
     // The Rouge Token contract address
     RGETokenInterface public rge;
     uint256 public tare;
@@ -41,7 +43,7 @@ contract RougeFactory is RougeRegistry {
     function createCampaign(address _issuer, uint32 _issuance, uint256 _tokens) public {
 
         // only rge contract can call createCampaign
-        // require(msg.sender == address(rge));
+        require(msg.sender == address(rge));
 
         SimpleRougeCampaign c = new SimpleRougeCampaign(_issuer, _issuance, rge, tare, this);
 

@@ -5,8 +5,6 @@ import "./RougeRegistryInterface.sol";
 
 contract RougeRegistry is RougeRegistryInterface {
 
-    string public version = 'v0.2';
-
     address[] issuers;
     address[] all_campaigns;
     

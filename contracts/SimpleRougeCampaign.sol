@@ -12,7 +12,7 @@ import "./RougeFactoryInterface.sol";
 
 contract SimpleRougeCampaign {
 
-    string public version = 'v0.8';
+    string public version = '0.8';
 
     // The Rouge Token contract address
     RGETokenInterface public rge;

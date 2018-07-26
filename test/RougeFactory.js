@@ -58,6 +58,11 @@ contract('RougeFactory', function(accounts) {
       }
     })
     
+    const factory_version = await factory.version.call();
+    const campaign = SimpleRougeCampaign.at(campaign_address);
+    const campaign_version = await campaign.version.call();
+    assert.equal(campaign_version, factory_version, "factory and campaign contract version are the same");
+
     const issuer_balance_after = await rge.balanceOf.call(issuer);
     assert.equal(issuer_balance_after.toNumber(), tokens - deposit, "issuer has sent tokens as a deposit to the factory");
 
