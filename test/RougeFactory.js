@@ -39,7 +39,7 @@ contract('RougeFactory', function(accounts) {
     const estimate = await rge.newCampaign.estimateGas(issuance, deposit, {from: issuer, gas: 3000000});
     // console.log('Base estimate newCampaign => ', estimate)
 
-    const result = await rge.newCampaign(issuance, deposit, {from: issuer, gas: estimate + 50000, gasPrice: web3.toWei(1, "gwei")})
+    const result = await rge.newCampaign(issuance, deposit, {from: issuer, gas: estimate + 60000, gasPrice: web3.toWei(1, "gwei")})
 
     assert.equal(result.receipt.cumulativeGasUsed, estimate, "cumulativeGasUsed correctly predict");
 
@@ -62,6 +62,9 @@ contract('RougeFactory', function(accounts) {
     const campaign = SimpleRougeCampaign.at(campaign_address);
     const campaign_version = await campaign.version.call();
     assert.equal(campaign_version, factory_version, "factory and campaign contract version are the same");
+
+    const campaign_state = await campaign.getState.call();
+    assert.equal(campaign_state, '0x0000000a000000000000000000000000', "return null state");
 
     const issuer_balance_after = await rge.balanceOf.call(issuer);
     assert.equal(issuer_balance_after.toNumber(), tokens - deposit, "issuer has sent tokens as a deposit to the factory");

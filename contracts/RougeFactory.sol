@@ -4,7 +4,7 @@
 
 */
 
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 
 import "./SimpleRougeCampaign.sol";
 
@@ -14,7 +14,7 @@ import "./RougeRegistry.sol";
 
 contract RougeFactory is RougeRegistry {
     
-    string public version = '0.8';
+    string public version = '0.9';
 
     // The Rouge Token contract address
     RGETokenInterface public rge;

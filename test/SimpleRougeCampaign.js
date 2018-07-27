@@ -8,8 +8,8 @@ const SimpleRougeCampaign = artifacts.require("./SimpleRougeCampaign.sol");
 
 const tare = 0.1 * 10**6;          /* tare price is 0.1 rge in beta phase */
 const tokens  = 1000 * 10**6;      /* issuer RGE tokens before campaign start */
-const gas = 2078845
-
+const gas = 3000778
+            
 const new_campaign = async function(rge, issuer, issuance, deposit) {
 
   const factory = await Factory.deployed();
@@ -59,7 +59,7 @@ contract('SimpleRougeCampaign', function(accounts) {
     
     // expiration of the campaign in 2 days
     const expiration = Math.trunc((new Date()).getTime() / 1000) + 60*60*24*2
-    await campaign.issue('0x2100', 'no acquisition/noredemtion campaign', expiration, {from: issuer});
+    await campaign.issue('0x02010000', 'no acquisition/noredemtion campaign', expiration, {gas: 2000000, from: issuer});
 
     const available = await campaign.available.call();    
     assert.equal(available.toNumber(), issuance, "check notes available after issuance");
@@ -88,7 +88,7 @@ contract('SimpleRougeCampaign', function(accounts) {
     const campaign = await new_campaign(rge, issuer, issuance, deposit);
 
     const expiration = Math.trunc((new Date()).getTime() / 1000) + 60*60*24*2
-    await campaign.issue('0x2100', 'issuer test', expiration, {from: issuer});
+    await campaign.issue('0x02010000', 'issuer test', expiration, {from: issuer});
 
     await campaign.distributeNote(bearer, {from: issuer});
 
@@ -127,7 +127,7 @@ contract('SimpleRougeCampaign', function(accounts) {
     const campaign = await new_campaign(rge, issuer, issuance, deposit);
 
     const expiration = Math.trunc((new Date()).getTime() / 1000) + 60*60*24*2
-    await campaign.issue('0x2100', 'acceptRedemption Test', expiration, {from: issuer});
+    await campaign.issue('0x02010000', 'acceptRedemption Test', expiration, {from: issuer});
 
     // call acquire with auth message and issuer signature
     const auth1 = create_auth_hash('acceptAcquisition', campaign.address, bearer)
@@ -144,6 +144,9 @@ contract('SimpleRougeCampaign', function(accounts) {
 
     const redeemed = await campaign.redeemed.call();    
     assert.equal(redeemed.toNumber(), 1, "note(s) redeemed after confirmRedemption");
+
+    const campaign_state = await campaign.getState.call();
+    assert.equal(campaign_state, '0x0000000a000000090000000100000001', "return null state");
 
     await campaign.kill({from: issuer});
 

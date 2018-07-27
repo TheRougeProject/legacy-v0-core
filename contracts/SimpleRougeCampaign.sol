@@ -1,10 +1,10 @@
 /*
 
-  Simple campaign contracts
+  Simple campaign contract
 
 */
 
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 
 import "./RGETokenInterface.sol";
 
@@ -12,7 +12,7 @@ import "./RougeFactoryInterface.sol";
 
 contract SimpleRougeCampaign {
 
-    string public version = '0.8';
+    string public version = '0.9';
 
     // The Rouge Token contract address
     RGETokenInterface public rge;
@@ -43,7 +43,15 @@ contract SimpleRougeCampaign {
 
     // web3.eth.sign compat prefix XXX mv to lib
     function prefixed(bytes32 _message) internal pure returns (bytes32) {
-        return keccak256("\x19Ethereum Signed Message:\n32", _message);
+        return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _message));
+    }
+
+    function getInfo() public view returns (bytes) {
+        return abi.encodePacked(issuer, scheme, campaignExpiration, name);
+    }
+
+    function getState() public view returns (bytes) {
+        return abi.encodePacked(issuance, available, acquired, redeemed);
     }
 
     bytes4 public scheme;
@@ -108,7 +116,7 @@ contract SimpleRougeCampaign {
     // _hash is any hashed msg that confirm issuer authorisation for the note acquisition
     function acquire(bytes32 _hash, uint8 v, bytes32 r, bytes32 s) CampaignOpen public returns (bool success) {
         require(msg.sender != issuer); 
-        require(_hash == keccak256('acceptAcquisition', this, msg.sender));
+        require(_hash == keccak256(abi.encodePacked('acceptAcquisition', this, msg.sender)));
         require(ecrecover(prefixed(_hash), v, r, s) == issuer);
         return acquisition(msg.sender);
     }
@@ -150,14 +158,14 @@ contract SimpleRougeCampaign {
     // _hash is any hashed msg agreed between issuer and bearer
     // WARNING: replay protection not implemented at protocol level
     function redeem(bytes32 _hash, uint8 v, bytes32 r, bytes32 s) CampaignOpen public returns (bool success) {
-        require(_hash == keccak256('acceptRedemption', this, msg.sender));
+        require(_hash == keccak256(abi.encodePacked('acceptRedemption', this, msg.sender)));
         require(ecrecover(prefixed(_hash), v, r, s) == issuer);
         return redemption(msg.sender);
     }
         
     function acceptRedemption(address _bearer, bytes32 _hash, uint8 v, bytes32 r, bytes32 s)
         CampaignOpen onlyBy(issuer) public returns (bool success) {
-        require(_hash == keccak256('acceptRedemption', this, _bearer));
+        require(_hash == keccak256(abi.encodePacked('acceptRedemption', this, _bearer)));
         require(ecrecover(prefixed(_hash), v, r, s) == _bearer);
         return redemption(_bearer);
     }

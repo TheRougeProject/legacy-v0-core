@@ -1,5 +1,5 @@
 
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 
 import "./RougeRegistryInterface.sol";
 
@@ -10,6 +10,7 @@ contract RougeRegistry is RougeRegistryInterface {
     
     mapping (address => bool) public is_issuer;
     mapping (address => bool) public is_campaign;
+    mapping (address => uint256) public campaign_index;
     mapping (address => address[]) campaigns;
 
     function add_campaign(address _issuer, address _a) internal {
@@ -20,6 +21,7 @@ contract RougeRegistry is RougeRegistryInterface {
         all_campaigns.push(_a);
         campaigns[_issuer].push(_a);
         is_campaign[_a] = true;
+        campaign_index[_a] = all_campaigns.length - 1;
     }
 
     function get_all_count() public view returns(uint count) {
