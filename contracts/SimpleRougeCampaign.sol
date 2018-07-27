@@ -12,7 +12,7 @@ import "./RougeFactoryInterface.sol";
 
 contract SimpleRougeCampaign {
 
-    string public version = '0.9';
+    bytes8 public version = '0.10';
 
     // The Rouge Token contract address
     RGETokenInterface public rge;
@@ -34,6 +34,9 @@ contract SimpleRougeCampaign {
     uint32 public redeemed = 0;
 
     constructor(address _issuer, uint32 _issuance, address _rge, uint256 _tare, address _factory) public {
+
+        require(_issuance > 0);
+
         issuer = _issuer;
         issuance = _issuance;
         rge = RGETokenInterface(_rge); 
@@ -41,17 +44,27 @@ contract SimpleRougeCampaign {
         factory = RougeFactoryInterface(_factory);
     }
 
+    enum Authorization { Acquisition, Redemption }
+
+    mapping (address => mapping (uint => bool)) public canAuthorize;
+
+    event AttestorAddition(address indexed attestor, Authorization auth);
+    
+    function addAttestor(address _attestor, Authorization _auth) onlyBy(issuer) public {
+        canAuthorize[_attestor][uint(_auth)] = true;
+        emit AttestorAddition(_attestor, _auth);
+    }
+    
+    event AttestorRemoval(address indexed attestor, Authorization auth);
+
+    function removeAttestor(address _attestor, Authorization _auth) onlyBy(issuer) public {
+        canAuthorize[_attestor][uint(_auth)] = false;
+        emit AttestorRemoval(_attestor, _auth);
+    }
+    
     // web3.eth.sign compat prefix XXX mv to lib
     function prefixed(bytes32 _message) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _message));
-    }
-
-    function getInfo() public view returns (bytes) {
-        return abi.encodePacked(issuer, scheme, campaignExpiration, name);
-    }
-
-    function getState() public view returns (bytes) {
-        return abi.encodePacked(issuance, available, acquired, redeemed);
     }
 
     bytes4 public scheme;
@@ -78,8 +91,21 @@ contract SimpleRougeCampaign {
         scheme = _scheme;
 
         emit Issuance(_scheme, _name, _campaignExpiration);
-
     }    
+
+    function issueWithAttestor(bytes4 _scheme, string _name, uint _campaignExpiration, address _attestor) onlyBy(issuer) public {
+        issue(_scheme, _name, _campaignExpiration);
+        addAttestor(_attestor, Authorization.Acquisition);
+        addAttestor(_attestor, Authorization.Redemption);
+    }
+    
+    function getInfo() public view returns (bytes) {
+        return abi.encodePacked(issuer, scheme, campaignExpiration, name);
+    }
+
+    function getState() public view returns (bytes) {
+        return abi.encodePacked(issuance, campaignIssued, available, acquired, redeemed);
+    }
 
     modifier CampaignOpen() {
         require(campaignIssued);
@@ -111,13 +137,12 @@ contract SimpleRougeCampaign {
         }
     }
 
-    event Log(bytes32 hash);
-
-    // _hash is any hashed msg that confirm issuer authorisation for the note acquisition
-    function acquire(bytes32 _hash, uint8 v, bytes32 r, bytes32 s) CampaignOpen public returns (bool success) {
+    // _hash is any hashed msg that confirm attestor(often issuer) authorization for the note acquisition
+    function acquire(bytes32 _hash, uint8 v, bytes32 r, bytes32 s, address _attestor) CampaignOpen public returns (bool success) {
         require(msg.sender != issuer); 
         require(_hash == keccak256(abi.encodePacked('acceptAcquisition', this, msg.sender)));
-        require(ecrecover(prefixed(_hash), v, r, s) == issuer);
+        require(canAuthorize[_attestor][uint(Authorization.Acquisition)]);
+        require(ecrecover(prefixed(_hash), v, r, s) == _attestor);
         return acquisition(msg.sender);
     }
     
@@ -155,11 +180,12 @@ contract SimpleRougeCampaign {
         return true;
     }
 
-    // _hash is any hashed msg agreed between issuer and bearer
-    // WARNING: replay protection not implemented at protocol level
-    function redeem(bytes32 _hash, uint8 v, bytes32 r, bytes32 s) CampaignOpen public returns (bool success) {
+    // _hash is any hashed msg that confirm attestor(often issuer) authorization for the note redemption
+    function redeem(bytes32 _hash, uint8 v, bytes32 r, bytes32 s, address _attestor) CampaignOpen public returns (bool success) {
+        require(msg.sender != issuer); 
         require(_hash == keccak256(abi.encodePacked('acceptRedemption', this, msg.sender)));
-        require(ecrecover(prefixed(_hash), v, r, s) == issuer);
+        require(canAuthorize[_attestor][uint(Authorization.Redemption)]);
+        require(ecrecover(prefixed(_hash), v, r, s) == _attestor);
         return redemption(msg.sender);
     }
         
@@ -170,6 +196,10 @@ contract SimpleRougeCampaign {
         return redemption(_bearer);
     }
         
+    function getWorkflow(address _bearer) public view returns (bytes) {
+        return abi.encodePacked(hasNote(_bearer), hasRedeemed(_bearer));
+    }
+
     function kill() onlyBy(issuer) public {
 
         // burn the tare for unredeemed notes if campaign has started

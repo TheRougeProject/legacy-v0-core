@@ -14,7 +14,7 @@ import "./RougeRegistry.sol";
 
 contract RougeFactory is RougeRegistry {
     
-    string public version = '0.9';
+    bytes8 public version = '0.10';
 
     // The Rouge Token contract address
     RGETokenInterface public rge;

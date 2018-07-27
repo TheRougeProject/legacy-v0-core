@@ -64,7 +64,7 @@ contract('RougeFactory', function(accounts) {
     assert.equal(campaign_version, factory_version, "factory and campaign contract version are the same");
 
     const campaign_state = await campaign.getState.call();
-    assert.equal(campaign_state, '0x0000000a000000000000000000000000', "return null state");
+    assert.equal(campaign_state, '0x0000000a00000000000000000000000000', "encoded state is correct");
 
     const issuer_balance_after = await rge.balanceOf.call(issuer);
     assert.equal(issuer_balance_after.toNumber(), tokens - deposit, "issuer has sent tokens as a deposit to the factory");
@@ -79,6 +79,9 @@ contract('RougeFactory', function(accounts) {
     assert.equal(campaign_balance.toNumber(), deposit, "the tokens deposit is now in the new campaign contract");
     
   });  
+
+  // todo create with zero notes
+
   
 });
 
