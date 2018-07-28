@@ -1,6 +1,6 @@
 
-var abi = require('ethereumjs-abi')
-var BN = require('bn.js')
+const abi = require('ethereumjs-abi')
+const BN = require('bn.js')
 
 const RGEToken = artifacts.require("./TestRGEToken.sol");
 const Factory = artifacts.require("./RougeFactory.sol");
@@ -205,8 +205,6 @@ contract('SimpleRougeCampaign', function(accounts) {
     assert.equal(issuer_balance_after.toNumber(), tokens - burned, "the issuer has his tokens back less tare for unredeemed notes");
     
   });  
-  
-  
 
 });
 

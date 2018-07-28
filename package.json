@@ -13,8 +13,9 @@
     "Christophe Le Bars <clbg@rouge.network>",
     "Valentin D. Guillois <vdg@rouge.network>"
   ],
-  "license": "AGPL",
+  "license": "AGPL-3.0-only",
   "dependencies": {
-    "ethereumjs-abi": "^0.6.5"
+    "ethereumjs-abi": "^0.6.5",
+    "ethereumjs-util": "^5.2.0"
   }
 }

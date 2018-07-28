@@ -45,14 +45,16 @@ contract RougeFactory is RougeRegistry {
         // only rge contract can call createCampaign
         require(msg.sender == address(rge));
 
+        // TODO create MetaRougeCmapign that also instanciate at issue() call
+        // alternative use _issuance = zero as trigger for CompleRougeCampaign type
         SimpleRougeCampaign c = new SimpleRougeCampaign(_issuer, _issuance, rge, tare, this);
 
-        // XXX no need to check rge set ? transfer would revert ...
+        // TODO XXX check front running
         rge.transfer(c, _tokens);     // transfer tokens to the campaign contract ...
 
         emit NewCampaign(_issuer, c, _issuance);
 
-        // XXX beta sugar getters / not stricly necessary...
+        // XXX beta sugar getters / not stricly necessary with good explorer/indexes...
         
         deposit[c] = _tokens;
         add_campaign(_issuer, c);
