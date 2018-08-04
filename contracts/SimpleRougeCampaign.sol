@@ -12,7 +12,7 @@ import "./RougeFactoryInterface.sol";
 
 contract SimpleRougeCampaign {
 
-    bytes8 public version = '0.10';
+    bytes8 public version = '0.11.0';
 
     // The Rouge Token contract address
     RGETokenInterface public rge;
@@ -44,7 +44,7 @@ contract SimpleRougeCampaign {
         factory = RougeFactoryInterface(_factory);
     }
 
-    enum Authorization { Acquisition, Redemption }
+    enum Authorization { Issuance, Acquisition, Redemption }
 
     mapping (address => mapping (uint => bool)) public canAuthorize;
 
@@ -113,9 +113,9 @@ contract SimpleRougeCampaign {
         _;
     }
     
-    mapping (address => bool) acquisitionRegister;
+    mapping (address => bool) public acquisitionRegister;
     
-    function hasNote(address _bearer) constant public returns (bool yes) {
+    function hasNote(address _bearer) public view returns (bool yes) {
         require(_bearer != issuer);             /* RULE issuer and bearer need to be diffrent */
         return acquisitionRegister[_bearer];
     }
@@ -161,18 +161,17 @@ contract SimpleRougeCampaign {
         acquisitionRegister[_to] = true;
     }
 
-    mapping (address => bool) redemptionRegister;
+    mapping (address => bool) public redemptionRegister;
 
-    function hasRedeemed(address _bearer) constant public returns (bool yes) {
-        require(_bearer != issuer);
-        require(hasNote(_bearer));
+    function hasRedeemed(address _bearer) public view returns (bool yes) {
+        /* require(_bearer != issuer); already tested with hasNote */
         return redemptionRegister[_bearer];
     }
 
     event Redemption(address indexed bearer);
 
     function redemption(address _bearer) CampaignOpen private returns (bool success) {
-        require(_bearer != issuer); 
+        require(hasNote(_bearer));
         require(!hasRedeemed(_bearer));
         redeemed += 1;
         redemptionRegister[_bearer] = true;

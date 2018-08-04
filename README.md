@@ -7,6 +7,10 @@ WARNING : this is NON AUDITED code. Use on testnet or with extreme caution.
 
 The project use the truffle framework (http://truffleframework.com/)
 
+## Versioning
+
+The project follows Semantic Versioning 2.0.0 : see https://semver.org/
+
 ## How to run tests :
 
 ### 1. install truffle :
