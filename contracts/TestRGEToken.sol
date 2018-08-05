@@ -1,6 +1,6 @@
 /*
 
-  Same interface/code as RGEToken but for test purpose only
+  Same interface/code as RGEToken but for testnet networks
 
   with a giveMeRGE faucet like function...
 
@@ -19,13 +19,14 @@ contract TestRGEToken is EIP20 {
     
     /* RGEToken */
     address owner; 
-    string public version = 'v0.03';
+    string public version = 'v0.5';
     uint256 public totalSupply = 1000000000 * 10**uint(decimals);
-    uint256 public   reserveY1 =  300000000 * 10**uint(decimals);
-    uint256 public   reserveY2 =  200000000 * 10**uint(decimals);
+    uint256 public   reserveY1 = 0;
+    uint256 public   reserveY2 = 0;
 
-    /* set a maximum per address */
-    uint256 public  maxBalance =    1000000 * 10**uint(decimals);
+    /* Testnet specific: set a maximum per address, minimum for owner for giveMeRGE function */
+    uint256 public  maxBalance =     100000 * 10**uint(decimals);
+    uint256 public    ownerMin =  300000000 * 10**uint(decimals);
 
     modifier onlyBy(address _address) {
         require(msg.sender == _address);
@@ -39,7 +40,7 @@ contract TestRGEToken is EIP20 {
     
     function giveMeRGE(uint256 _value) public returns (bool success) {
         require(balances[msg.sender] + _value <= maxBalance);
-        require(balances[owner] >= _value);
+        require(balances[owner] >= ownerMin + _value);
         balances[owner] -= _value;
         balances[msg.sender] += _value;
         emit Transfer(owner, msg.sender, _value);
