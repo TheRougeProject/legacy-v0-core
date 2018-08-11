@@ -15,6 +15,7 @@
   ],
   "license": "AGPL-3.0-only",
   "dependencies": {
+    "eth-sig-util": "^2.0.2",
     "ethereumjs-abi": "^0.6.5",
     "ethereumjs-util": "^5.2.0"
   }

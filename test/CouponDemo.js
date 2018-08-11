@@ -69,7 +69,8 @@ contract('SimpleRougeCampaign(CouponDemo)', function(accounts) {
 
     // call acquire with auth message and attestor signature
     const auth1 = create_auth_hash('acceptAcquisition', campaign.address, bearer)
-    const sign1 = get_signature(auth1)
+    const sign1 = get_signature('Rouge ID: ' + auth1.substr(2))
+
     await campaign.acquire(auth1, sign1.v, sign1.r, sign1.s, attestor, {from: bearer});
     
     const acquired = await campaign.acquired.call();    
@@ -77,7 +78,7 @@ contract('SimpleRougeCampaign(CouponDemo)', function(accounts) {
     
     // call acceptRedemption with auth message and attestor signature
     const auth2 = create_auth_hash('acceptRedemption', campaign.address, bearer)
-    const sign2 = get_signature(auth2)
+    const sign2 = get_signature('Rouge ID: ' + auth2.substr(2))
     await campaign.redeem(auth2, sign2.v, sign2.r, sign2.s, attestor, {from: bearer});
 
     const redeemed = await campaign.redeemed.call();    

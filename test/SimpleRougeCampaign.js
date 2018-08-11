@@ -1,6 +1,7 @@
 
 const abi = require('ethereumjs-abi')
 const BN = require('bn.js')
+const ethUtil = require('ethereumjs-util')
 
 const RGEToken = artifacts.require("./TestRGEToken.sol");
 const Factory = artifacts.require("./RougeFactory.sol");
@@ -34,9 +35,9 @@ const create_auth_hash = function(msg, campaign, account) {
   
 }
 
-const get_signature = function(account, hash) {
+const get_signature = function(account, msg) {
 
-  const signature = web3.eth.sign(account, hash).substr(2)
+  const signature = web3.eth.sign(account, ethUtil.bufferToHex(ethUtil.toBuffer(msg))).substr(2)
   return {
     r: '0x' + signature.slice(0, 64),
     s: '0x' + signature.slice(64, 128),
@@ -96,9 +97,9 @@ contract('SimpleRougeCampaign', function(accounts) {
     assert.equal(acquired.toNumber(), 1, "check notes acquired after distributeNote");
 
     // call acceptRedemption with auth message and bearer signature
-    const auth2 = create_auth_hash('acceptRedemption', campaign.address, bearer)
-    const sign2 = get_signature(bearer, auth2)
-    await campaign.acceptRedemption(bearer, auth2, sign2.v, sign2.r, sign2.s, {from: issuer});
+    const auth = create_auth_hash('acceptRedemption', campaign.address, bearer)
+    const sign = get_signature(bearer, 'Rouge ID: ' + auth.substr(2))
+    await campaign.acceptRedemption(bearer, auth, sign.v, sign.r, sign.s, {from: issuer});
 
     const redeemed = await campaign.redeemed.call();    
     assert.equal(redeemed.toNumber(), 1, "note(s) redeemed after confirmRedemption");
@@ -131,7 +132,7 @@ contract('SimpleRougeCampaign', function(accounts) {
 
     // call acquire with auth message and issuer signature
     const auth1 = create_auth_hash('acceptAcquisition', campaign.address, bearer)
-    const sign1 = get_signature(issuer, auth1)
+    const sign1 = get_signature(issuer, 'Rouge ID: ' + auth1.substr(2))
     await campaign.acquire(auth1, sign1.v, sign1.r, sign1.s, issuer, {from: bearer});
     
     const acquired = await campaign.acquired.call();    
@@ -139,7 +140,7 @@ contract('SimpleRougeCampaign', function(accounts) {
     
     // call acceptRedemption with auth message and issuer signature
     const auth2 = create_auth_hash('acceptRedemption', campaign.address, bearer)
-    const sign2 = get_signature(issuer, auth2)
+    const sign2 = get_signature(issuer, 'Rouge ID: ' + auth2.substr(2))
     await campaign.redeem(auth2, sign2.v, sign2.r, sign2.s, issuer, {from: bearer});
 
     const redeemed = await campaign.redeemed.call();    
@@ -177,7 +178,7 @@ contract('SimpleRougeCampaign', function(accounts) {
 
     // call acquire with auth message and attestor signature
     const auth1 = create_auth_hash('acceptAcquisition', campaign.address, bearer)
-    const sign1 = get_signature(attestor, auth1)
+    const sign1 = get_signature(attestor, 'Rouge ID: ' + auth1.substr(2))
     await campaign.acquire(auth1, sign1.v, sign1.r, sign1.s, attestor, {from: bearer});
     
     const acquired = await campaign.acquired.call();    
@@ -185,7 +186,7 @@ contract('SimpleRougeCampaign', function(accounts) {
     
     // call acceptRedemption with auth message and attestor signature
     const auth2 = create_auth_hash('acceptRedemption', campaign.address, bearer)
-    const sign2 = get_signature(attestor, auth2)
+    const sign2 = get_signature(attestor, 'Rouge ID: ' + auth2.substr(2))
     await campaign.redeem(auth2, sign2.v, sign2.r, sign2.s, attestor, {from: bearer});
 
     const redeemed = await campaign.redeemed.call();    

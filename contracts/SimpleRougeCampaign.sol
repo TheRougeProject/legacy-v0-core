@@ -12,7 +12,7 @@ import "./RougeFactoryInterface.sol";
 
 contract SimpleRougeCampaign {
 
-    bytes8 public version = '0.11.0';
+    string public version = '0.12.0';
 
     // The Rouge Token contract address
     RGETokenInterface public rge;
@@ -63,8 +63,18 @@ contract SimpleRougeCampaign {
     }
     
     // web3.eth.sign compat prefix XXX mv to lib
-    function prefixed(bytes32 _message) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _message));
+    function getHexString(bytes32 value) internal pure returns (string) {
+        bytes memory result = new bytes(64);
+        string memory characterString = "0123456789abcdef";
+        bytes memory characters = bytes(characterString);
+        for (uint8 i = 0; i < 32; i++) {
+            result[i * 2] = characters[uint256((value[i] & 0xF0) >> 4)];
+            result[i * 2 + 1] = characters[uint256(value[i] & 0xF)];
+        }
+        return string(result);
+    }
+    function prefixed(bytes32 _hash) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n74Rouge ID: ", getHexString(_hash)));
     }
 
     bytes4 public scheme;
