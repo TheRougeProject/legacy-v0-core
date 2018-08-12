@@ -33,9 +33,12 @@ contract RougeFactory is RougeRegistry {
         _;
     }
 
+    event NewRougeFactory(address factory, uint256 _tare);
+
     function setParams (address _rge, uint256 _tare) onlyBy(owner) public {
         rge = RGETokenInterface(_rge); 
         tare = _tare;
+        emit NewRougeFactory(this, tare);
     }
 
     event NewCampaign(address issuer, address campaign, uint32 issuance);
