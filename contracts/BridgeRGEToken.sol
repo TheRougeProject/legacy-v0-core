@@ -19,7 +19,7 @@ contract BridgeRGEToken is EIP20 {
     
     /* RGEToken - keeping most of the interface similar to RGE home */
     address owner; 
-    string public version = 'v1.0f';
+    string public version = 'v1.0-0.2'; /* composition rge version + bridge version */
     uint256 public totalSupply = 1000000000 * 10**uint(decimals);
     uint256 public   reserveY1 = 0;
     uint256 public   reserveY2 = 0;
@@ -39,6 +39,8 @@ contract BridgeRGEToken is EIP20 {
         network = _network;
         homeAuthority = _homeAuthority;
         bridge = _bridge;
+        name = _name;
+        symbol = _symbol;
         balances[address(0)] = totalSupply;      /* RGE on address(0) means there are not on this foreign chain */
     }
     
@@ -61,17 +63,16 @@ contract BridgeRGEToken is EIP20 {
     
     event RGEClaim(address indexed account, uint indexed _network, uint indexed depositBlock, uint256 value);
 
-    function claim(bytes32 _sealHash, bytes32 _authHash, uint256 _value, uint _depositBlock, uint _lockBlock,
+    function claim(bytes32 _sealHash, uint256 _value, uint _depositBlock, uint _lockBlock,
                    uint8 vLock, bytes32 rLock, bytes32 sLock, uint8 vAuth, bytes32 rAuth, bytes32 sAuth)
       BridgeOpen public returns (bool success) {
         require(msg.sender != homeAuthority); 
         require(balances[address(0)] >= _value);
         require(!claimed[msg.sender][_depositBlock]);           // check if the deposit has not been already claimed
-        bytes32 _lockHash = keccak256(abi.encodePacked('locking', msg.sender, _value, network, bridge, _depositBlock));
+        bytes32 _lockHash = keccak256(abi.encodePacked(msg.sender, _value, network, bridge, _depositBlock));
         require(ecrecover(prefixed(_lockHash), vLock, rLock, sLock) == owner);
-        require(_sealHash == keccak256(abi.encodePacked('sealing', _lockHash, vLock, rLock, sLock, _lockBlock)));
-        require(_authHash == keccak256(abi.encodePacked('authorization', _sealHash)));
-        require(ecrecover(prefixed(_authHash), vAuth, rAuth, sAuth) == homeAuthority);
+        require(_sealHash == keccak256(abi.encodePacked(_lockHash, vLock, rLock, sLock, _lockBlock)));
+        require(ecrecover(prefixed(_sealHash), vAuth, rAuth, sAuth) == homeAuthority);
         claimed[msg.sender][_depositBlock] = true;             // distribute the claim
         balances[address(0)] -= _value;
         balances[msg.sender] += _value;
@@ -86,7 +87,7 @@ contract BridgeRGEToken is EIP20 {
         require(msg.sender != homeAuthority); 
         require(claimed[msg.sender][_depositBlock]);
         require(!surrendered[msg.sender][_depositBlock]);
-        bytes32 _lockHash = keccak256(abi.encodePacked('locking', msg.sender, _value, network, bridge, _depositBlock));
+        bytes32 _lockHash = keccak256(abi.encodePacked(msg.sender, _value, network, bridge, _depositBlock));
         require(ecrecover(prefixed(_lockHash), vLock, rLock, sLock) == owner);
         require(balances[msg.sender] >= _value);
         surrendered[msg.sender][_depositBlock] = true;        // withdraw tokens from circulation
@@ -122,7 +123,7 @@ contract BridgeRGEToken is EIP20 {
         onlyBy(owner) public {
         require(msg.sender != _account);
         require(surrendered[_account][_depositBlock]);
-        require(_hash == keccak256(abi.encodePacked('unlocking', _account, network, bridge, _depositBlock)));
+        require(_hash == keccak256(abi.encodePacked(_account, network, bridge, _depositBlock)));
         require(ecrecover(prefixed(_hash), v, r, s) == msg.sender);
         emit Repudiate(_account, network, _depositBlock, v, r, s);
     }

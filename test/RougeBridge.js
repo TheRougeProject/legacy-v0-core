@@ -6,29 +6,24 @@ const ethUtil = require('ethereumjs-util')
 const RGEToken = artifacts.require("./TestRGEToken.sol");
 const RougeBridge = artifacts.require("./RougeBridge.sol");
 
-const createLockHash = function(msg, user, deposit, foreign_network, bridge, depositBlock) {
+const createLockHash = function(user, deposit, foreign_network, bridge, depositBlock) {
   return '0x' + abi.soliditySHA3(
-    [ "string", "address", "uint", "uint", "address", "uint" ],
-    [ msg, new BN(user, 16), deposit, foreign_network, new BN(bridge, 16), depositBlock ]
+    [ "address", "uint", "uint", "address", "uint" ],
+    [ new BN(user, 16), deposit, foreign_network, new BN(bridge, 16), depositBlock ]
   ).toString('hex')
 }
 
-const createSealHash = function(msg, hash, v, r, s, lockBlock) {
+const createSealHash = function(hash, v, r, s, lockBlock) {
   return '0x' + abi.soliditySHA3(
-    [ "string", "bytes32", "uint8", "bytes32", "bytes32", "uint" ],
-    [ msg, hash, v, r, s, lockBlock ]
+    [ "bytes32", "uint8", "bytes32", "bytes32", "uint" ],
+    [ hash, v, r, s, lockBlock ]
   ).toString('hex')
 }
 
-const createAuthHash = function(msg, hash) {
+const createUnlockHash = function(user, foreign_network, bridge, depositBlock) {
   return '0x' + abi.soliditySHA3(
-    [ "string", "bytes32" ], [ msg, hash ]
-  ).toString('hex')
-}
-const createUnlockHash = function(msg, user, foreign_network, bridge, depositBlock) {
-  return '0x' + abi.soliditySHA3(
-    [ "string", "address", "uint", "address", "uint" ],
-    [ msg, new BN(user, 16), foreign_network, new BN(bridge, 16), depositBlock ]
+    [ "address", "uint", "address", "uint" ],
+    [ new BN(user, 16), foreign_network, new BN(bridge, 16), depositBlock ]
   ).toString('hex')
 }
 
@@ -147,22 +142,21 @@ contract('RougeBridge', function(accounts) {
 
     // foreign chain + owner locking fct
 
-    const hash1 = createLockHash('locking', user, deposit, foreign_network, bridge.address, depositBlock)
+    const hash1 = createLockHash(user, deposit, foreign_network, bridge.address, depositBlock)
     const sign1 = getSignature(hash1, foreign_authority_pkey)    
     const lock_tx = await bridge.lockEscrow(hash1, user, foreign_network, depositBlock, sign1.v, sign1.r, sign1.s);
     const lockBlock = lock_tx.receipt.blockNumber;
 
-    const expected_seal = createSealHash('sealing', hash1, sign1.v, sign1.r, sign1.s, lockBlock);
+    const expected_seal = createSealHash(hash1, sign1.v, sign1.r, sign1.s, lockBlock);
     const seal = await bridge.escrowSeal.call(user, foreign_network, depositBlock);
     assert.equal(seal, expected_seal, "check seal in that locked tokens");
 
-    // owner is create the Auth Hash (to be used on foreign chain)
+    // owner is signing the sealHash for green light (to be used on foreign chain)
 
-    const authHash = createAuthHash('authorization', seal);
-    const signAuth = getAccountSignature(authHash, accounts[0]);    
-    const auth_tx = await bridge.createAuth(authHash, user, foreign_network, depositBlock, signAuth.v, signAuth.r, signAuth.s);
+    const signAuth = getAccountSignature(seal, accounts[0]);    
+    const auth_tx = await bridge.createAuth(user, foreign_network, depositBlock, signAuth.v, signAuth.r, signAuth.s);
 
-    const event_BridgeAuth_sign = web3.sha3('BridgeAuth(address,uint256,uint256,uint8,bytes32,bytes32,bytes32)')
+    const event_BridgeAuth_sign = web3.sha3('BridgeAuth(address,uint256,uint256,uint8,bytes32,bytes32)')
     auth_tx.receipt.logs.forEach( function(e) {
       if (e.topics[0] === event_BridgeAuth_sign) {
         assert.equal(e.topics[1].slice(26, 66), user.substr(2), "user coherent in log");
@@ -171,14 +165,13 @@ contract('RougeBridge', function(accounts) {
         assert.equal(web3.toDecimal(e.data.slice(0, 66)), signAuth.v, "sign v ok");
         assert.equal('0x' + e.data.slice(66, 130), signAuth.r, "sign r ok");
         assert.equal('0x' + e.data.slice(130, 194), signAuth.s, "sign s ok");
-        assert.equal('0x' + e.data.slice(194, 260), authHash, "AuthHash ok");
       }
     })
 
     // this should fail as expected
     // await bridge.withdraw(foreign_network, depositBlock, {from: user})
     
-    const hash2 = createUnlockHash('unlocking', user, foreign_network, bridge.address, depositBlock)
+    const hash2 = createUnlockHash(user, foreign_network, bridge.address, depositBlock)
     const sign2 = getSignature(hash2, foreign_authority_pkey)
     const unlock_tx = await bridge.unlockEscrow(hash2, user, foreign_network, depositBlock, sign2.v, sign2.r, sign2.s);
 

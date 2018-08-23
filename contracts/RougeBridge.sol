@@ -10,7 +10,7 @@ import "./RGETokenInterface.sol";
 
 contract RougeBridge {
     
-    string public version = 'v0.1';
+    string public version = 'v0.2';
     
     address public owner; 
 
@@ -86,9 +86,9 @@ contract RougeBridge {
         onlyBy(owner) public {
         require(escrow[_account][_network][_depositBlock] > 0);                              // do not work for nothing
         require(_hash == keccak256(abi.encodePacked(
-                        'locking', _account, escrow[_account][_network][_depositBlock], _network, this, _depositBlock)));
-        require(ecrecover(prefixed(_hash), v, r, s) == foreignAuthority[_network]);        // confirms that foreign authority has undersigned the tokens Locking
-        bytes32 sealHash = keccak256(abi.encodePacked('sealing', _hash, v, r, s, block.number));
+                         _account, escrow[_account][_network][_depositBlock], _network, this, _depositBlock)));
+        require(ecrecover(prefixed(_hash), v, r, s) == foreignAuthority[_network]);          // confirms that foreign authority has undersigned the tokens Locking
+        bytes32 sealHash = keccak256(abi.encodePacked(_hash, v, r, s, block.number));
         escrowSeal[_account][_network][_depositBlock] = sealHash;
         emit EscrowLocked(_account, _network, _depositBlock, v, r, s, sealHash);
     }   
@@ -97,13 +97,12 @@ contract RougeBridge {
     // The user can claim the bridged tokens as soon as the authorization is visible on the main blockchain (via LOGS)
     // (it's ok if the claiming tx comes before the authorization tx)
 
-    event BridgeAuth(address indexed account, uint indexed _network, uint indexed depositBlock, uint8 v, bytes32 r, bytes32 s, bytes32 authHash);
+    event BridgeAuth(address indexed account, uint indexed _network, uint indexed depositBlock, uint8 v, bytes32 r, bytes32 s);
 
-    function createAuth(bytes32 _authHash, address _account, uint _network, uint _depositBlock, uint8 v, bytes32 r, bytes32 s)
+    function createAuth(address _account, uint _network, uint _depositBlock, uint8 v, bytes32 r, bytes32 s)
         onlyBy(owner) public {
-        require(_authHash == keccak256(abi.encodePacked('authorization', escrowSeal[_account][_network][_depositBlock])));
-        require(ecrecover(prefixed(_authHash), v, r, s) == owner);
-        emit BridgeAuth(_account, _network, _depositBlock, v, r, s, _authHash);
+        require(ecrecover(prefixed(escrowSeal[_account][_network][_depositBlock]), v, r, s) == owner);
+        emit BridgeAuth(_account, _network, _depositBlock, v, r, s);
     }   
 
     event EscrowUnlocked(address indexed account, uint indexed _network, uint indexed depositBlock);
@@ -111,10 +110,10 @@ contract RougeBridge {
     function unlockEscrow(bytes32 _hash, address _account, uint _network, uint _depositBlock, uint8 v, bytes32 r, bytes32 s)
         onlyBy(owner) public {
         require(escrow[_account][_network][_depositBlock] > 0);
-        escrowSeal[_account][_network][_depositBlock] != bytes32(0);              // seal shoudl exists
-        require(_hash == keccak256(abi.encodePacked('unlocking', _account, _network, this, _depositBlock)));
+        escrowSeal[_account][_network][_depositBlock] != bytes32(0);              // seal should exists
+        require(_hash == keccak256(abi.encodePacked(_account, _network, this, _depositBlock)));
         require(ecrecover(prefixed(_hash), v, r, s) == foreignAuthority[_network]);
-        escrowSeal[_account][_network][_depositBlock] = bytes32(0);              // remove the seal
+        escrowSeal[_account][_network][_depositBlock] = bytes32(0);               // remove the seal
         emit EscrowUnlocked(_account, _network, _depositBlock);
     }
 
