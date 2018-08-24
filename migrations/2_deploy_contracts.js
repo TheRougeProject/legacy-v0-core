@@ -11,7 +11,7 @@ module.exports = async function(deployer) {
     deployer.deploy(TestRGEToken),
     deployer.deploy(RougeFactory),
     deployer.deploy(RougeBridge, '0x345ca3e014aaf5dca488057592ee47305d9b3e10'),
-    deployer.deploy(BridgeRGEToken, 3, '0x0', '0x0', 'Foreign RGE', 'f_RGE')
+    deployer.deploy(BridgeRGEToken, 3, '0x0', '0x0', '0x0', 'Foreign RGE', 'f_RGE')
   ]);
 
   instances = await Promise.all([

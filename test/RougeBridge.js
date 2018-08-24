@@ -55,7 +55,7 @@ contract('RougeBridge', function(accounts) {
     
   });  
 
-  it("Bridge deposit then withdraw without locked", async function() {
+  it("Bridge deposit then withdraw before locking", async function() {
 
     const user = accounts[1];
     const tokens  = 1000 * 10**6; /* 1K RGE tokens */
@@ -78,7 +78,7 @@ contract('RougeBridge', function(accounts) {
     const is_closed = await bridge.isOpen.call(foreign_network);
     assert.equal(is_closed, false, "Bridge closed by default");
 
-    await bridge.adminBridge(foreign_network, true, '0x0')
+    await bridge.adminBridge(foreign_network, true, '0x0', '0x0')
 
     const is_opened = await bridge.isOpen.call(foreign_network);
     assert.equal(is_opened, true, "Bridge is now opened");
@@ -126,16 +126,17 @@ contract('RougeBridge', function(accounts) {
     const tokens  = 1000 * 10**6; /* 1K RGE tokens */
     const deposit  =  50 * 10**6; /* 1K RGE tokens */
     const foreign_network = 3;
-    const foreign_authority = '0x955d20aedce1227941b12fa27aa1c77af758e10c';
-    const foreign_authority_pkey = 'c81c5128f1051be82c1896906cb1e283e07ec99e8ff53c5d02ea78cf5e7cc790';
-
+    const foreign_validator = '0x955d20aedce1227941b12fa27aa1c77af758e10c';
+    const foreign_validator_pkey = 'c81c5128f1051be82c1896906cb1e283e07ec99e8ff53c5d02ea78cf5e7cc790';
+    const home_validator = accounts[4];
+    
     const rge = await RGEToken.deployed();
     const bridge = await RougeBridge.deployed();
 
     await rge.giveMeRGE(tokens, {from: user});
     await rge.approve(bridge.address, deposit, {from: user});
 
-    await bridge.adminBridge(foreign_network, true, foreign_authority)
+    await bridge.adminBridge(foreign_network, true, home_validator, foreign_validator)
 
     const result = await bridge.deposit(deposit, foreign_network, {from: user, gas: 67431 +20000, gasPrice: web3.toWei(1, "gwei")})
     const depositBlock = result.receipt.blockNumber;
@@ -143,8 +144,8 @@ contract('RougeBridge', function(accounts) {
     // foreign chain + owner locking fct
 
     const hash1 = createLockHash(user, deposit, foreign_network, bridge.address, depositBlock)
-    const sign1 = getSignature(hash1, foreign_authority_pkey)    
-    const lock_tx = await bridge.lockEscrow(hash1, user, foreign_network, depositBlock, sign1.v, sign1.r, sign1.s);
+    const sign1 = getSignature(hash1, foreign_validator_pkey)    
+    const lock_tx = await bridge.lockEscrow(hash1, user, foreign_network, depositBlock, sign1.v, sign1.r, sign1.s, {from: home_validator});
     const lockBlock = lock_tx.receipt.blockNumber;
 
     const expected_seal = createSealHash(hash1, sign1.v, sign1.r, sign1.s, lockBlock);
@@ -153,8 +154,8 @@ contract('RougeBridge', function(accounts) {
 
     // owner is signing the sealHash for green light (to be used on foreign chain)
 
-    const signAuth = getAccountSignature(seal, accounts[0]);    
-    const auth_tx = await bridge.createAuth(user, foreign_network, depositBlock, signAuth.v, signAuth.r, signAuth.s);
+    const signAuth = getAccountSignature(seal, home_validator);    
+    const auth_tx = await bridge.createAuth(user, foreign_network, depositBlock, signAuth.v, signAuth.r, signAuth.s, {from: home_validator});
 
     const event_BridgeAuth_sign = web3.sha3('BridgeAuth(address,uint256,uint256,uint8,bytes32,bytes32)')
     auth_tx.receipt.logs.forEach( function(e) {
@@ -172,8 +173,8 @@ contract('RougeBridge', function(accounts) {
     // await bridge.withdraw(foreign_network, depositBlock, {from: user})
     
     const hash2 = createUnlockHash(user, foreign_network, bridge.address, depositBlock)
-    const sign2 = getSignature(hash2, foreign_authority_pkey)
-    const unlock_tx = await bridge.unlockEscrow(hash2, user, foreign_network, depositBlock, sign2.v, sign2.r, sign2.s);
+    const sign2 = getSignature(hash2, foreign_validator_pkey)
+    const unlock_tx = await bridge.unlockEscrow(hash2, user, foreign_network, depositBlock, sign2.v, sign2.r, sign2.s, {from: home_validator});
 
     const seal_after = await bridge.escrowSeal.call(user, foreign_network, depositBlock);
     assert.equal(seal_after, false, "the tokens are not locked anymore in the bridge contract");
