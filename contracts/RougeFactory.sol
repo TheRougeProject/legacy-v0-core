@@ -14,15 +14,13 @@ import "./RougeRegistry.sol";
 
 contract RougeFactory is RougeRegistry {
     
-    string public version = '0.12.0';
+    string public version = '0.13.0';
 
     // The Rouge Token contract address
     RGETokenInterface public rge;
     uint256 public tare;
     
     address owner;
-
-    mapping (address => uint256) public deposit; // per campaign ... 
 
     constructor() public {
         owner = msg.sender;
@@ -33,15 +31,15 @@ contract RougeFactory is RougeRegistry {
         _;
     }
 
-    event NewRougeFactory(address factory, uint256 _tare);
+    event SetFactory(address indexed _rge, uint256 _tare);
 
     function setParams (address _rge, uint256 _tare) onlyBy(owner) public {
         rge = RGETokenInterface(_rge); 
         tare = _tare;
-        emit NewRougeFactory(this, tare);
+        emit SetFactory(_rge, tare);
     }
 
-    event NewCampaign(address issuer, address campaign, uint32 issuance);
+    event NewCampaign(address indexed issuer, address indexed campaign, uint32 issuance);
 
     function createCampaign(address _issuer, uint32 _issuance, uint256 _tokens) public {
 
@@ -53,13 +51,12 @@ contract RougeFactory is RougeRegistry {
         SimpleRougeCampaign c = new SimpleRougeCampaign(_issuer, _issuance, rge, tare, this);
 
         // TODO XXX check front running
-        rge.transfer(c, _tokens);     // transfer tokens to the campaign contract ...
+        require(rge.transfer(c, _tokens));     // transfer tokens to the campaign contract ...
 
         emit NewCampaign(_issuer, c, _issuance);
 
         // XXX beta sugar getters / not stricly necessary with good explorer/indexes...
         
-        deposit[c] = _tokens;
         add_campaign(_issuer, c);
         
     }

@@ -50,13 +50,11 @@ contract('RougeFactory', function(accounts) {
     const event_NewCampaign_sign = web3.sha3('NewCampaign(address,address,uint32)')
     // const event_Transfer_sign = web3.sha3('Transfer(address,address,uint256)')
     result.receipt.logs.forEach( function(e) {
-      // console.log(e)
       if (e.topics[0] === event_NewCampaign_sign) {
-
-        assert.equal(e.data.slice(2 + 24, 66), issuer.substr(2), "issuer first data of NewCampaign event");
-        assert.equal(e.data.slice(66 + 24, 130), campaign_address.substr(2), "campaign address 2nd data of NewCampaign event");
-        assert.equal(web3.toDecimal( '0x' + e.data.slice(130, 194)), issuance, "issuance 3nd data of NewCampaign event");
-
+        // console.log(e)
+        assert.equal(e.topics[1].slice(26, 66), issuer.substr(2), "issuer first data of NewCampaign event");
+        assert.equal(e.topics[2].slice(26, 66), campaign_address.substr(2), "campaign address 2nd data of NewCampaign event");
+        assert.equal(web3.toDecimal(e.data), issuance, "issuance 3nd data of NewCampaign event");
       }
     })
     
