@@ -9,7 +9,7 @@ const SimpleRougeCampaign = artifacts.require("./SimpleRougeCampaign.sol");
 
 const tare = 0.1 * 10**6;          /* tare price is 0.1 rge in beta phase */
 const tokens  = 1000 * 10**6;      /* issuer RGE tokens before campaign start */
-const gas = 3000778
+const gas = 6000778
             
 const new_campaign = async function(rge, issuer, issuance, deposit) {
 
@@ -60,7 +60,7 @@ contract('SimpleRougeCampaign', function(accounts) {
     
     // expiration of the campaign in 2 days
     const expiration = Math.trunc((new Date()).getTime() / 1000) + 60*60*24*2
-    await campaign.issue('0x02010000', 'no acquisition/noredemtion campaign', expiration, {from: issuer});
+    await campaign.issue('0x0200ee00', 'no acquisition/noredemtion campaign', expiration, {from: issuer});
 
     const available = await campaign.available.call();    
     assert.equal(available.toNumber(), issuance, "check notes available after issuance");
@@ -89,7 +89,7 @@ contract('SimpleRougeCampaign', function(accounts) {
     const campaign = await new_campaign(rge, issuer, issuance, deposit);
 
     const expiration = Math.trunc((new Date()).getTime() / 1000) + 60*60*24*2
-    await campaign.issueWithAttestor('0x02010000', 'issuer test', expiration, issuer, {from: issuer});
+    await campaign.issue('0x0200ee00', 'issuer test', expiration, {from: issuer});
 
     await campaign.distributeNote(bearer, {from: issuer});
 
@@ -128,7 +128,7 @@ contract('SimpleRougeCampaign', function(accounts) {
     const campaign = await new_campaign(rge, issuer, issuance, deposit);
 
     const expiration = Math.trunc((new Date()).getTime() / 1000) + 60*60*24*2
-    await campaign.issueWithAttestor('0x02010000', 'acceptRedemption Test', expiration, issuer, {from: issuer});
+    await campaign.issue('0x0200ee00', 'acceptRedemption Test', expiration, {from: issuer});
 
     // call acquire with auth message and issuer signature
     const auth1 = create_auth_hash('acceptAcquisition', campaign.address, bearer)
@@ -174,7 +174,7 @@ contract('SimpleRougeCampaign', function(accounts) {
     const campaign = await new_campaign(rge, issuer, issuance, deposit);
 
     const expiration = Math.trunc((new Date()).getTime() / 1000) + 60*60*24*2
-    await campaign.issueWithAttestor('0x02010000', 'acceptRedemption Test', expiration, attestor, {from: issuer});
+    await campaign.issueWithAttestor('0x0200ee00', 'acceptRedemption Test', expiration, attestor, [4, 5], {from: issuer});
 
     // call acquire with auth message and attestor signature
     const auth1 = create_auth_hash('acceptAcquisition', campaign.address, bearer)

@@ -9,7 +9,7 @@ const SimpleRougeCampaign = artifacts.require("./SimpleRougeCampaign.sol");
 
 const tare = 0.1 * 10**6;          /* tare price is 0.1 rge in beta phase */
 const tokens  = 1000 * 10**6;      /* issuer RGE tokens before campaign start */
-const gas = 3000778
+const gas = 5000778
 
 const attestor = '0x955d20aedce1227941b12fa27aa1c77af758e10c';
 const attestor_pkey = 'c81c5128f1051be82c1896906cb1e283e07ec99e8ff53c5d02ea78cf5e7cc790';
@@ -65,7 +65,7 @@ contract('SimpleRougeCampaign(CouponDemo)', function(accounts) {
     const campaign = await new_campaign(rge, issuer, issuance, deposit);
 
     const expiration = Math.trunc((new Date()).getTime() / 1000) + 60*60*24*2
-    await campaign.issueWithAttestor('0x02010000', 'acceptRedemption Test', expiration, attestor, {from: issuer});
+    await campaign.issueWithAttestor('0x0200ee00', 'acceptRedemption Test', expiration, attestor, [4, 5], {from: issuer});
 
     // call acquire with auth message and attestor signature
     const auth1 = create_auth_hash('acceptAcquisition', campaign.address, bearer)

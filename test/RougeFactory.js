@@ -6,6 +6,7 @@ const Factory = artifacts.require("./RougeFactory.sol");
 const SimpleRougeCampaign = artifacts.require("./SimpleRougeCampaign.sol");
 
 const tare = 0.1 * 10**6;  /* tare price is 0.1 RGE in beta phase */
+const gas = 6000778
 
 contract('RougeFactory', function(accounts) {
 
@@ -38,10 +39,10 @@ contract('RougeFactory', function(accounts) {
     const issuer_balance_post = await rge.balanceOf.call(issuer);
     assert.equal(issuer_balance_post.toNumber(), tokens, "issuer has receive tokens to create a campaign");
 
-    const estimate = await rge.newCampaign.estimateGas(issuance, deposit, {from: issuer, gas: 3000778});
+    const estimate = await rge.newCampaign.estimateGas(issuance, deposit, {from: issuer, gas: gas});
     // console.log('Base estimate newCampaign => ', estimate)
 
-    const result = await rge.newCampaign(issuance, deposit, {from: issuer, gas: estimate + 80000, gasPrice: web3.toWei(1, "gwei")})
+    const result = await rge.newCampaign(issuance, deposit, {from: issuer, gas: estimate + 90000, gasPrice: web3.toWei(1, "gwei")})
 
     assert.equal(result.receipt.cumulativeGasUsed, estimate, "cumulativeGasUsed correctly predict");
 

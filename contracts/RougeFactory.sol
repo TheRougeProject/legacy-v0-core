@@ -14,7 +14,7 @@ import "./RougeRegistry.sol";
 
 contract RougeFactory is RougeRegistry {
     
-    string public version = '0.13.0';
+    string public version = '0.16.0';
 
     // The Rouge Token contract address
     RGETokenInterface public rge;
@@ -46,8 +46,11 @@ contract RougeFactory is RougeRegistry {
         // only rge contract can call createCampaign
         require(msg.sender == address(rge));
 
-        // TODO create MetaRougeCmapign that also instanciate at issue() call
+        // TODO create MetaRougeCampaign that also instanciate at issue() call
         // alternative use _issuance = zero as trigger for CompleRougeCampaign type
+
+        // Campaign = several Notes Set => Campaign issuance = sum of all notes set issuance.
+
         SimpleRougeCampaign c = new SimpleRougeCampaign(_issuer, _issuance, rge, tare, this);
 
         // TODO XXX check front running
