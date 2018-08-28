@@ -1,4 +1,10 @@
 module.exports = {
+  solc: {
+    optimizer: {
+      enabled: true,
+      runs: 2000
+    }
+  },
   networks: {
     // local: {
     //   host: "localhost",

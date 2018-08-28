@@ -33,7 +33,7 @@ library RougeCampaign {
 
 contract SimpleRougeCampaign {
  
-    string public version = '0.16.0';
+    string public version = '0.17.0';
 
     // The Rouge Token contract address
     RGETokenInterface public rge;
@@ -55,16 +55,20 @@ contract SimpleRougeCampaign {
 
     event AttestorAddition(address indexed attestor, Authorization auth);
     
-    function addAttestor(address _attestor, Authorization _auth) isAttestor(Authorization.Role) public {
-        isAuthorized[_attestor][uint(_auth)] = true;
-        emit AttestorAddition(_attestor, _auth);
+    function addAttestor(address _attestor, Authorization[] _auths) isAttestor(Authorization.Role) public {
+        for (uint i = 0; i < _auths.length; i++) {
+            isAuthorized[_attestor][uint(_auths[i])] = true;
+            emit AttestorAddition(_attestor, _auths[i]);
+        }
     }
     
     event AttestorRemoval(address indexed attestor, Authorization auth);
 
-    function removeAttestor(address _attestor, Authorization _auth) isAttestor(Authorization.Role) public {
-        isAuthorized[_attestor][uint(_auth)] = false;
-        emit AttestorRemoval(_attestor, _auth);
+    function removeAttestor(address _attestor, Authorization[] _auths) isAttestor(Authorization.Role) public {
+        for (uint i = 0; i < _auths.length; i++) {
+            isAuthorized[_attestor][uint(_auths[i])] = false;
+            emit AttestorRemoval(_attestor, _auths[i]);
+        }
     }
 
     uint32 public issuance;
@@ -183,12 +187,10 @@ contract SimpleRougeCampaign {
         emit Issuance(_scheme, _name, _campaignExpiration);
     }    
 
-    // Authorization is handled bu issue()
+    // Authorization is handled by issue()
     function issueWithAttestor(bytes4 _scheme, string _name, uint _campaignExpiration, address _attestor, Authorization[] _auths) public {
         issue(_scheme, _name, _campaignExpiration);
-        for (uint i = 0; i < _auths.length; i++) {
-            addAttestor(_attestor, _auths[i]);
-        }
+        addAttestor(_attestor, _auths);
     }
     
     function getInfo() public view returns (bytes) {
@@ -245,16 +247,16 @@ contract SimpleRougeCampaign {
         return acquisition(_bearer);
     }
     
-    /* mapping (address => bool) public transferRegister;*/
+    mapping (address => bool) public transferRegister;
     
-    /* low level transfer of a note between bearers  
+    /* low level transfer of a note between bearers */
     function transfer(address _from, address _to) CampaignOpen private {
-        require(_to != issuer);                /* RULE issuer and bearer need to be diffrent 
+        require(_to != issuer);                /* RULE issuer and bearer need to be different */
         require(hasNote(_from));
         acquisitionRegister[_from] = false; 
-        transferRegister[_from] = true;        /* RULE transfer is not reversible 
+        transferRegister[_from] = true;        /* RULE transfer is not reversible */
         acquisitionRegister[_to] = true;
-    } */
+    }
 
     mapping (address => bool) public redemptionRegister;
 
@@ -308,9 +310,9 @@ contract SimpleRougeCampaign {
         return redemption(_bearer);
     }
         
-    /*function getWorkflow(address _bearer) public view returns (bytes) {
+    function getWorkflow(address _bearer) public view returns (bytes) {
         return abi.encodePacked(hasNote(_bearer), hasRedeemed(_bearer));
-        } */
+    } 
     
     function kill() isAttestor(Authorization.Kill) public {
 
