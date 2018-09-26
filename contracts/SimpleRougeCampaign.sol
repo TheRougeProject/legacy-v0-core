@@ -96,7 +96,7 @@ contract SimpleRougeCampaign {
     
     function setAcquisitionFuelProvision() payable isAttestor(Authorization.Issuance) public {
         require(!campaignIssued);
-        require(msg.value > issuance);
+        require(msg.value >= issuance);
         acquisitionFuelProvision = msg.value / issuance;
         emit AcquisitionFuel(msg.value / issuance);
     }

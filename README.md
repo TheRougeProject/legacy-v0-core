@@ -1,7 +1,8 @@
 # The Rouge Project - beta code factory and campaign contracts to be used with the RGE token
 
-WARNING: The Rouge token [RGE] has been audited but not yet the factory. Please do your own due diligences if you
-decide to use this code on the Ethereum mainnet. You may lose your RGE deposit.
+WARNING: The Rouge token [RGE] has been audited but not yet the factory. So, please do your own due diligences if you
+decide to use this code on a production network (Ethereum mainnet, POA, etc). You may lose your RGE deposit, ETH, POA
+and/or any ERC20, ERC721 tokens sent as attachment to a campaign.
 
 WARNING : this is NON AUDITED code. Use on testnet or with extreme caution.
 
@@ -18,9 +19,7 @@ The project follows Semantic Versioning 2.0.0 : see https://semver.org/
 ```
   npm install -g truffle
 ```
-### 2. start a testnet (e.g. EthereumJS TestRPC: https://github.com/ethereumjs/testrpc)
-
-### 3. launch the tests
+### 2. launch the tests
 
 ```
   truffle test
@@ -41,7 +40,11 @@ the network grow).
 
    deposit = RGE that you move to the campaign as deposit (should equal or more than mim RGE)
 
-3. Enjoy :)
+3. Read the introduction on medium :
+
+   https://medium.com/the-rouge-project/getting-started-with-the-rouge-protocol-9a335079e69e
+
+4. Enjoy :)
 
 
 ### Licensed under GNU AFFERO GENERAL PUBLIC LICENSE v3
