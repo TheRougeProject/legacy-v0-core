@@ -1,1 +1,6 @@
 build/
+tmp
+*.local
+node_modules/
+Makefile
+
