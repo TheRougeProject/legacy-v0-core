@@ -1,14 +1,17 @@
 {
-  "name": "Rouge-Protocol",
+  "name": "rouge-protocol-solidity",
   "version": "0.17.0+190506",
-  "description": "The Rouge Project - Note and Voucher Protocol",
+  "description": "Solidity contracts for the Rouge protocol (note and voucher protocol)",
   "main": "",
   "files": [
     "build",
     "src"
   ],
   "keywords": [
+    "solidity",
     "ethereum",
+    "rge",
+    "rouge",
     "coupon",
     "voucher",
     "ticket"
@@ -18,7 +21,7 @@
     "Valentin D. Guillois <vdg@rouge.network>"
   ],
   "license": "AGPL-3.0-only",
-  "repository": "TheRougeProject/Rouge-Protocol-ETH",
+  "repository": "TheRougeProject/rouge-protocol-solidity",
   "scripts": {
     "prepublish": "yarn run build",
     "precommit": "yarn run test",
