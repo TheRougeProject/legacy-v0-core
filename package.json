@@ -1,7 +1,7 @@
 {
   "name": "rouge-protocol-solidity",
   "version": "0.17.0+190506",
-  "description": "Solidity contracts for the Rouge protocol (note and voucher protocol)",
+  "description": "Solidity contracts for the Rouge protocol (voucher, coupon, ticket, note on Ethereum)",
   "main": "",
   "files": [
     "build",
