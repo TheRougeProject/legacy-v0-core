@@ -39,11 +39,11 @@
     "access": "public"
   },
   "devDependencies": {
-    "eth-sig-util": "^2.1.0",
-    "ethereumjs-abi": "^0.6.5",
+    "eth-sig-util": "^2.4.4",
+    "ethereumjs-abi": "^0.6.8",
     "ethereumjs-util": "^5.2.0",
     "hex64": "^0.4.0",
-    "release-it": "^10.4.0",
-    "remixd": "^0.1.8-alpha.5"
+    "release-it": "^10.4.5",
+    "remixd": "^0.1.8-alpha.14"
   }
 }
