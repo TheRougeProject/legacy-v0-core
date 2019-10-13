@@ -33,7 +33,7 @@ library RougeCampaign {
 
 contract SimpleRougeCampaign {
  
-    string public version = '0.17.0';
+    string public version = '0.18';
 
     // The Rouge Token contract address
     RGETokenInterface public rge;
@@ -42,7 +42,7 @@ contract SimpleRougeCampaign {
     RougeFactoryInterface public factory;
     uint256 public tare;
 
-    address public issuer; // XXX todo ? owner != initial issuer
+    address public issuer; // TODO owner != initial issuer
 
     enum Authorization { All, Role, Attachment, Issuance, Acquisition, Redemption, Kill }
 
@@ -165,7 +165,7 @@ contract SimpleRougeCampaign {
     bool public campaignIssued;
     uint public campaignExpiration;
 
-    event Issuance(bytes4 scheme, string name, uint campaignExpiration);
+    event Issuance(bytes4 indexed scheme, string name, uint campaignExpiration);
 
     function issue(bytes4 _scheme, string _name, uint _campaignExpiration) isAttestor(Authorization.Issuance) public {
         require(!campaignIssued);
