@@ -6,11 +6,11 @@
 
 */
 
-pragma solidity ^0.4.24;
+pragma solidity >=0.5.0 <0.7.0;
 
-import "./EIP20.sol";
+import "../node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-contract TestRGEToken is EIP20 {
+contract TestRGEToken is ERC20 {
     
     /* ERC20 */
     string public name = 'TEST Rouge';
@@ -19,8 +19,7 @@ contract TestRGEToken is EIP20 {
     
     /* RGEToken */
     address owner; 
-    string public version = 'v0.5';
-    uint256 public totalSupply = 1000000000 * 10**uint(decimals);
+    string public version = 'v0.6';
     uint256 public   reserveY1 = 0;
     uint256 public   reserveY2 = 0;
 
@@ -28,22 +27,22 @@ contract TestRGEToken is EIP20 {
     uint256 public  maxBalance =     100000 * 10**uint(decimals);
     uint256 public    ownerMin =  300000000 * 10**uint(decimals);
 
+    uint256 private _totalSupply = 1000000000 * 10**uint(decimals);
+
     modifier onlyBy(address _address) {
         require(msg.sender == _address);
         _;
     }
     
-    constructor() EIP20 (totalSupply, name, decimals, symbol) public {
+    constructor() public {
         owner = msg.sender;
-        balances[owner] = totalSupply;
+        _mint(owner, _totalSupply);
     }
     
     function giveMeRGE(uint256 _value) public returns (bool success) {
-        require(balances[msg.sender] + _value <= maxBalance);
-        require(balances[owner] >= ownerMin + _value);
-        balances[owner] -= _value;
-        balances[msg.sender] += _value;
-        emit Transfer(owner, msg.sender, _value);
+        require(balanceOf(msg.sender) + _value <= maxBalance);
+        require(balanceOf(owner) >= ownerMin + _value);
+        _transfer(owner, msg.sender, _value);
         return true;
      }
 
@@ -57,17 +56,16 @@ contract TestRGEToken is EIP20 {
 
     function newCampaign(uint32 _issuance, uint256 _value) public {
         transfer(factory,_value);
-        require(factory.call(bytes4(keccak256("createCampaign(address,uint32,uint256)")),msg.sender,_issuance,_value));
+        (bool success,) = factory.call(abi.encodeWithSignature("createCampaign(address,uint32,uint256)",msg.sender,_issuance,_value));
+        require(success);
     }
 
     event Burn(address indexed burner, uint256 value);
 
     function burn(uint256 _value) public returns (bool success) {
         require(_value > 0);
-        require(balances[msg.sender] >= _value);
-        balances[msg.sender] -= _value;
-        totalSupply -= _value;
-        emit Transfer(msg.sender, address(0), _value);
+        require(balanceOf(msg.sender) >= _value);
+        _burn(msg.sender, _value);
         emit Burn(msg.sender, _value);
         return true;
     }

@@ -1,47 +1,8 @@
 
-const abi = require('ethereumjs-abi')
-const BN = require('bn.js')
-const ethUtil = require('ethereumjs-util')
+const { createLockHash, createSealHash, createUnlockHash, zeroAddress, bridgeSig } = require('./utils.js');
 
 const RGEToken = artifacts.require("./TestRGEToken.sol");
 const RougeBridge = artifacts.require("./RougeBridge.sol");
-
-const createLockHash = function(user, deposit, foreign_network, bridge, depositBlock) {
-  return '0x' + abi.soliditySHA3(
-    [ "address", "uint", "uint", "address", "uint" ],
-    [ new BN(user, 16), deposit, foreign_network, new BN(bridge, 16), depositBlock ]
-  ).toString('hex')
-}
-
-const createSealHash = function(hash, v, r, s, lockBlock) {
-  return '0x' + abi.soliditySHA3(
-    [ "bytes32", "uint8", "bytes32", "bytes32", "uint" ],
-    [ hash, v, r, s, lockBlock ]
-  ).toString('hex')
-}
-
-const createUnlockHash = function(user, foreign_network, bridge, depositBlock) {
-  return '0x' + abi.soliditySHA3(
-    [ "address", "uint", "address", "uint" ],
-    [ new BN(user, 16), foreign_network, new BN(bridge, 16), depositBlock ]
-  ).toString('hex')
-}
-
-const getSignature = function(hash, pkey) {
-  const signature = ethUtil.ecsign(ethUtil.hashPersonalMessage(
-                    ethUtil.toBuffer('Bridge fct: ' + hash.substr(2))), new Buffer(pkey, 'hex')
-  )
-  return { r: ethUtil.bufferToHex(signature.r), s: ethUtil.bufferToHex(signature.s), v: signature.v }
-}
-
-const getAccountSignature = function(hash, account) {
-  const signature = web3.eth.sign(account, ethUtil.bufferToHex(ethUtil.toBuffer('Bridge fct: ' + hash.substr(2)))).substr(2)
-  return {
-    r: '0x' + signature.slice(0, 64),
-    s: '0x' + signature.slice(64, 128),
-    v: web3.toDecimal( '0x' + signature.slice(128, 130) ) + 27
-  }
-}
 
 contract('RougeBridge', function(accounts) {
 
@@ -78,29 +39,28 @@ contract('RougeBridge', function(accounts) {
     const is_closed = await bridge.isOpen.call(foreign_network);
     assert.equal(is_closed, false, "Bridge closed by default");
 
-    await bridge.adminBridge(foreign_network, true, '0x0', '0x0')
+    await bridge.adminBridge(foreign_network, true, zeroAddress, zeroAddress)
 
     const is_opened = await bridge.isOpen.call(foreign_network);
     assert.equal(is_opened, true, "Bridge is now opened");
 
-    const estimate = await bridge.deposit.estimateGas(deposit, foreign_network, {gas: 200000, from: user})
-    // console.log('Base estimate newCampaign => ', estimate)
+    const estimate = await bridge.deposit.estimateGas(deposit, foreign_network, {from: user})
 
-    const result = await bridge.deposit(deposit, foreign_network, {from: user, gas: 67431 + 20000, gasPrice: web3.toWei(1, "gwei")})
-    const depositBlock = result.receipt.blockNumber;
+    const tx = await bridge.deposit(deposit, foreign_network, {from: user, gas: estimate, gasPrice: web3.utils.toWei('1', "gwei")})
+    const depositBlock = tx.receipt.blockNumber;
 
-    const event_BridgeDeposit_sign = web3.sha3('BridgeDeposit(address,uint256,uint256,uint256)')
+    const event_BridgeDeposit_sign = web3.utils.sha3('BridgeDeposit(address,uint256,uint256,uint256)')
     var countlog = 0;
-    result.receipt.logs.forEach( function(e) {
+    tx.receipt.rawLogs.forEach( function(e) {
       if (e.topics[0] === event_BridgeDeposit_sign) {
         countlog++
-        assert.equal(e.topics[1].slice(26, 66), user.substr(2), "user coherent in log");
-        assert.equal(web3.toDecimal( e.topics[2] ), foreign_network , "coherent foreign_network");
-        assert.equal(web3.toDecimal( e.topics[3] ), depositBlock, "coherent block number");
+        assert.equal(e.topics[1].slice(26, 66), user.substr(2).toLowerCase(), "user coherent in log");
+        assert.equal(web3.utils.hexToNumber( e.topics[2] ), foreign_network , "coherent foreign_network");
+        assert.equal(web3.utils.hexToNumber( e.topics[3] ), depositBlock, "coherent block number");
       }
     })
     assert.equal(countlog, 1, "1 log tested");
-    assert.equal(result.receipt.cumulativeGasUsed, estimate, "cumulativeGasUsed correctly predicted");
+    assert.isBelow(estimate - tx.receipt.cumulativeGasUsed, 16000, "cumulativeGasUsed mostly predict");
 
     const user_balance_after_deposit = await rge.balanceOf.call(user);
     assert.equal(user_balance_after_deposit.toNumber(), tokens - deposit, "tokens are in escrow, not user");
@@ -138,13 +98,13 @@ contract('RougeBridge', function(accounts) {
 
     await bridge.adminBridge(foreign_network, true, home_validator, foreign_validator)
 
-    const result = await bridge.deposit(deposit, foreign_network, {from: user, gas: 67431 +20000, gasPrice: web3.toWei(1, "gwei")})
-    const depositBlock = result.receipt.blockNumber;
+    const tx = await bridge.deposit(deposit, foreign_network, {from: user, gas: 67431 +20000, gasPrice: web3.utils.toWei('1', "gwei")})
+    const depositBlock = tx.receipt.blockNumber;
 
     // foreign chain + owner locking fct
 
     const hash1 = createLockHash(user, deposit, foreign_network, bridge.address, depositBlock)
-    const sign1 = getSignature(hash1, foreign_validator_pkey)    
+    const sign1 = bridgeSig(foreign_validator, hash1);
     const lock_tx = await bridge.lockEscrow(hash1, user, foreign_network, depositBlock, sign1.v, sign1.r, sign1.s, {from: home_validator});
     const lockBlock = lock_tx.receipt.blockNumber;
 
@@ -154,16 +114,16 @@ contract('RougeBridge', function(accounts) {
 
     // owner is signing the sealHash for green light (to be used on foreign chain)
 
-    const signAuth = getAccountSignature(seal, home_validator);    
+    const signAuth = bridgeSig(home_validator, seal);
     const auth_tx = await bridge.createAuth(user, foreign_network, depositBlock, signAuth.v, signAuth.r, signAuth.s, {from: home_validator});
 
-    const event_BridgeAuth_sign = web3.sha3('BridgeAuth(address,uint256,uint256,uint8,bytes32,bytes32)')
-    auth_tx.receipt.logs.forEach( function(e) {
+    const event_BridgeAuth_sign = web3.utils.sha3('BridgeAuth(address,uint256,uint256,uint8,bytes32,bytes32)')
+    auth_tx.receipt.rawLogs.forEach( function(e) {
       if (e.topics[0] === event_BridgeAuth_sign) {
-        assert.equal(e.topics[1].slice(26, 66), user.substr(2), "user coherent in log");
-        assert.equal(web3.toDecimal( e.topics[2] ), foreign_network , "coherent foreign_network");
-        assert.equal(web3.toDecimal( e.topics[3] ), depositBlock, "coherent block number");
-        assert.equal(web3.toDecimal(e.data.slice(0, 66)), signAuth.v, "sign v ok");
+        assert.equal(e.topics[1].slice(26, 66), user.substr(2).toLowerCase(), "user coherent in log");
+        assert.equal(web3.utils.hexToNumber( e.topics[2] ), foreign_network , "coherent foreign_network");
+        assert.equal(web3.utils.hexToNumber( e.topics[3] ), depositBlock, "coherent block number");
+        assert.equal(web3.utils.hexToNumber(e.data.slice(0, 66)), signAuth.v, "sign v ok");
         assert.equal('0x' + e.data.slice(66, 130), signAuth.r, "sign r ok");
         assert.equal('0x' + e.data.slice(130, 194), signAuth.s, "sign s ok");
       }
@@ -173,7 +133,7 @@ contract('RougeBridge', function(accounts) {
     // await bridge.withdraw(foreign_network, depositBlock, {from: user})
     
     const hash2 = createUnlockHash(user, foreign_network, bridge.address, depositBlock)
-    const sign2 = getSignature(hash2, foreign_validator_pkey)
+    const sign2 = bridgeSig(foreign_validator, hash2)
     const unlock_tx = await bridge.unlockEscrow(hash2, user, foreign_network, depositBlock, sign2.v, sign2.r, sign2.s, {from: home_validator});
 
     const seal_after = await bridge.escrowSeal.call(user, foreign_network, depositBlock);

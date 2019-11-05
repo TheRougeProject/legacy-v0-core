@@ -4,17 +4,13 @@
 
 */
 
-pragma solidity ^0.4.24;
+pragma solidity >=0.5.0 <0.7.0;
 
 import "./SimpleRougeCampaign.sol";
 
-// XXX RougeRegistry is temporary helper
-
-import "./RougeRegistry.sol";
-
-contract RougeFactory is RougeRegistry {
+contract RougeFactory {
     
-    string public version = '0.18';
+    string public version = '0.20';
 
     // The Rouge Token contract address
     RGETokenInterface public rge;
@@ -41,7 +37,7 @@ contract RougeFactory is RougeRegistry {
 
     event NewCampaign(address indexed issuer, address indexed campaign, uint32 issuance);
 
-    function createCampaign(address _issuer, uint32 _issuance, uint256 _tokens) public {
+    function createCampaign(address payable _issuer, uint32 _issuance, uint256 _tokens) public {
 
         // only rge contract can call createCampaign
         require(msg.sender == address(rge));
@@ -51,17 +47,13 @@ contract RougeFactory is RougeRegistry {
 
         // Campaign = several Notes Set => Campaign issuance = sum of all notes set issuance.
 
-        SimpleRougeCampaign c = new SimpleRougeCampaign(_issuer, _issuance, rge, tare, this);
+        SimpleRougeCampaign c = new SimpleRougeCampaign(_issuer, _issuance, address(rge), tare, address(this));
 
         // TODO XXX check front running
-        require(rge.transfer(c, _tokens));     // transfer tokens to the campaign contract ...
+        require(rge.transfer(address(c), _tokens));     // transfer tokens to the campaign contract ...
 
-        emit NewCampaign(_issuer, c, _issuance);
+        emit NewCampaign(_issuer, address(c), _issuance);
 
-        // XXX beta sugar getters / not stricly necessary with good explorer/indexes...
-        
-        add_campaign(_issuer, c);
-        
     }
 
 }

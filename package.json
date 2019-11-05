@@ -23,9 +23,9 @@
   "license": "AGPL-3.0-only",
   "repository": "TheRougeProject/rouge-protocol-solidity",
   "scripts": {
-    "prepublish": "yarn run build",
-    "precommit": "yarn run test",
-    "prepush": "yarn run test",
+    "prepublish": "npm run build",
+    "precommit": "npm run test",
+    "prepush": "npm run test",
     "release": "release-it",
     "test": "truffle test",
     "build": "truffle compile"
@@ -39,11 +39,11 @@
     "access": "public"
   },
   "devDependencies": {
-    "eth-sig-util": "^2.4.4",
+    "@openzeppelin/contracts": "^2.4.0",
+    "@truffle/contract": "^4.0.38",
     "ethereumjs-abi": "^0.6.8",
-    "ethereumjs-util": "^5.2.0",
-    "hex64": "^0.4.0",
-    "release-it": "^10.4.5",
-    "remixd": "^0.1.8-alpha.14"
+    "ethereumjs-util": "^6.1.0",
+    "release-it": "^12.4.3",
+    "truffle": "^5.0.43"
   }
 }
