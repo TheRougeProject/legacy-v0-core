@@ -43,7 +43,7 @@ contract('RougeFactory', function(accounts) {
 
     const tx = await rge.newCampaign(issuance, deposit, {from: issuer, gas: estimate, gasPrice: web3.utils.toWei('1', "gwei")})
 
-    assert.isBelow(estimate - tx.receipt.cumulativeGasUsed, 70000, "cumulativeGasUsed mostly predict");
+    assert.isBelow(estimate - tx.receipt.cumulativeGasUsed, 80000, `cumulativeGasUsed mostly predict estimate ${estimate}`);
 
     const campaign_address = tx.receipt.logs[1].args.to;
 

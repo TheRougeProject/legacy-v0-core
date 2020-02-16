@@ -98,7 +98,7 @@ contract('RougeBridge', function(accounts) {
 
     await bridge.adminBridge(foreign_network, true, home_validator, foreign_validator)
 
-    const tx = await bridge.deposit(deposit, foreign_network, {from: user, gas: 67431 +20000, gasPrice: web3.utils.toWei('1', "gwei")})
+    const tx = await bridge.deposit(deposit, foreign_network, {from: user, gas: 67431 +30000, gasPrice: web3.utils.toWei('1', "gwei")})
     const depositBlock = tx.receipt.blockNumber;
 
     // foreign chain + owner locking fct

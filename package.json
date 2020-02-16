@@ -1,6 +1,6 @@
 {
   "name": "rouge-protocol-solidity",
-  "version": "0.21.1",
+  "version": "0.21.0",
   "description": "Solidity contracts for the Rouge protocol (voucher, coupon, ticket, note on Ethereum)",
   "main": "",
   "files": [
@@ -39,11 +39,11 @@
     "access": "public"
   },
   "devDependencies": {
-    "@openzeppelin/contracts": "^2.4.0",
-    "@truffle/contract": "^4.0.38",
+    "@openzeppelin/contracts": "2.4.0",
+    "@truffle/contract": "^4.1.9",
     "ethereumjs-abi": "^0.6.8",
-    "ethereumjs-util": "^6.1.0",
+    "ethereumjs-util": "^6.2.0",
     "release-it": "^12.4.3",
-    "truffle": "^5.0.43"
+    "truffle": "^5.1.13"
   }
 }

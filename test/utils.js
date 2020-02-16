@@ -58,7 +58,7 @@ function authHash (msg, campaign, bearer) {
 
 function protocolSig (account, hash, prefix = 'Rouge ID: ') {
   const signature = ethUtils.ecsign(ethUtils.hashPersonalMessage(
-    ethUtils.toBuffer(prefix + hash.substr(2))
+    ethUtils.toBuffer(ethUtils.bufferToHex( Buffer.from(prefix + hash.substr(2))))
   ), ethUtils.toBuffer('0x' + privateKey[account.toLowerCase()]))
   return {
     r: ethUtils.bufferToHex(signature.r),
