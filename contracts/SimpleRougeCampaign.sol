@@ -10,7 +10,7 @@ import "./RGETokenInterface.sol";
 
 import "./RougeFactoryInterface.sol";
 
-import "../node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 library RougeCampaign {
 
@@ -34,7 +34,7 @@ library RougeCampaign {
 
 contract SimpleRougeCampaign {
  
-    string public version = '0.20';
+    bytes2 public version = 0x0021;
 
     // The Rouge Token contract address
     RGETokenInterface public rge;
@@ -166,7 +166,7 @@ contract SimpleRougeCampaign {
     bool public campaignIssued;
     uint public campaignExpiration;
 
-    event Issuance(bytes4 indexed scheme, string name, uint campaignExpiration);
+    event Issuance(bytes2 indexed version, address indexed issuer, bytes4 indexed scheme, string name, uint campaignExpiration);
 
     function issue(bytes4 _scheme, string memory _name, uint _campaignExpiration) isAttestor(Authorization.Issuance) public {
         require(!campaignIssued);
@@ -185,7 +185,7 @@ contract SimpleRougeCampaign {
         available = issuance;
         scheme = _scheme;
 
-        emit Issuance(_scheme, _name, _campaignExpiration);
+        emit Issuance(version, issuer, _scheme, _name, _campaignExpiration);
     }    
 
     // Authorization is handled by issue()

@@ -8,7 +8,7 @@
 
 pragma solidity >=0.5.0 <0.7.0;
 
-import "../node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract BridgeRGEToken is ERC20 {
     
