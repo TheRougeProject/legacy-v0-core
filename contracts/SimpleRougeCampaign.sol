@@ -175,9 +175,9 @@ contract SimpleRougeCampaign {
         uint256 rgeBalance = rge.balanceOf(address(this));
         require(rgeBalance >= issuance * tare);
 
-        // XXX minimum campaign duration 1 day, maximum 120 days (could be a param for tare ?)
-        require(_campaignExpiration >= now + 60*60*24);
-        require(_campaignExpiration <= now + 60*60*24*120);
+        // minimum campaign duration 12 hours, maximum 360 days (XXX could be a param for tare ?)
+        require(_campaignExpiration >= now + 60*60*12);
+        require(_campaignExpiration <= now + 60*60*24*360);
         
         name = _name;
         campaignIssued = true;
