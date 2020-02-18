@@ -4,27 +4,28 @@
 
 */
 
-pragma solidity ^0.4.24;
+pragma solidity >=0.5.0 <0.7.0;
 
 import "./RGETokenInterface.sol";
 
 import "./RougeFactoryInterface.sol";
 
-import "./EIP721Interface.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 library RougeCampaign {
 
-    // web3.eth.sign compat prefix
-    function getHexString(bytes32 value) internal pure returns (string) {
+    function getHexString(bytes32 value) internal pure returns (string memory) {
         bytes memory result = new bytes(64);
         string memory characterString = "0123456789abcdef";
         bytes memory characters = bytes(characterString);
         for (uint8 i = 0; i < 32; i++) {
-            result[i * 2] = characters[uint256((value[i] & 0xF0) >> 4)];
-            result[i * 2 + 1] = characters[uint256(value[i] & 0xF)];
+            result[i * 2] = characters[(uint8(value[i]) & 0xF0) >> 4];
+            result[i * 2 + 1] = characters[uint8(value[i]) & 0xF];
         }
         return string(result);
     }
+
+    // web3.eth.sign compat prefix
     function prefixed(bytes32 _hash) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n74Rouge ID: ", getHexString(_hash)));
     }
@@ -33,7 +34,7 @@ library RougeCampaign {
 
 contract SimpleRougeCampaign {
  
-    string public version = '0.17.0';
+    bytes2 public version = 0x0021;
 
     // The Rouge Token contract address
     RGETokenInterface public rge;
@@ -42,7 +43,7 @@ contract SimpleRougeCampaign {
     RougeFactoryInterface public factory;
     uint256 public tare;
 
-    address public issuer; // XXX todo ? owner != initial issuer
+    address payable public issuer; // TODO owner != initial issuer
 
     enum Authorization { All, Role, Attachment, Issuance, Acquisition, Redemption, Kill }
 
@@ -55,7 +56,7 @@ contract SimpleRougeCampaign {
 
     event AttestorAddition(address indexed attestor, Authorization auth);
     
-    function addAttestor(address _attestor, Authorization[] _auths) isAttestor(Authorization.Role) public {
+    function addAttestor(address _attestor, Authorization[] memory _auths) isAttestor(Authorization.Role) public {
         for (uint i = 0; i < _auths.length; i++) {
             isAuthorized[_attestor][uint(_auths[i])] = true;
             emit AttestorAddition(_attestor, _auths[i]);
@@ -64,7 +65,7 @@ contract SimpleRougeCampaign {
     
     event AttestorRemoval(address indexed attestor, Authorization auth);
 
-    function removeAttestor(address _attestor, Authorization[] _auths) isAttestor(Authorization.Role) public {
+    function removeAttestor(address _attestor, Authorization[] memory _auths) isAttestor(Authorization.Role) public {
         for (uint i = 0; i < _auths.length; i++) {
             isAuthorized[_attestor][uint(_auths[i])] = false;
             emit AttestorRemoval(_attestor, _auths[i]);
@@ -76,7 +77,7 @@ contract SimpleRougeCampaign {
     uint32 public acquired;
     uint32 public redeemed;
 
-    constructor(address _issuer, uint32 _issuance, address _rge, uint256 _tare, address _factory) public {
+    constructor(address payable _issuer, uint32 _issuance, address _rge, uint256 _tare, address _factory) public {
         require(_issuance > 0);
 
         issuer = _issuer;
@@ -123,10 +124,10 @@ contract SimpleRougeCampaign {
         emit NewAttachment(AttachmentClass.Fuel, address(0), msg.value / issuance);
     }
 
-    function attachERC20(EIP20Interface _erc20, uint256 _value) isAttestor(Authorization.Attachment) public {
+    function attachERC20(IERC20 _erc20, uint256 _value) isAttestor(Authorization.Attachment) public {
         require(!campaignIssued);
         require(_value >= issuance);
-        require(_erc20.transferFrom(msg.sender, this, _value));
+        require(_erc20.transferFrom(msg.sender, address(this), _value));
         require(address(rge) != address(_erc20));
         attachments.push(Attachment({
             class: AttachmentClass.ERC20,
@@ -140,17 +141,17 @@ contract SimpleRougeCampaign {
     event ReceivedERC721(address _operator, address _from, uint256 _tokenId, bytes _data);
 
     bytes4 private constant ERC721_RECEIVED = 0x150b7a02;
-    function onERC721Received(address _operator, address _from, uint256 _tokenId, bytes _data ) public returns(bytes4) {
+    function onERC721Received(address _operator, address _from, uint256 _tokenId, bytes memory _data ) public returns(bytes4) {
         require(!campaignIssued);
         emit ReceivedERC721( _operator, _from, _tokenId, _data);
         erc721TokenIds.push(_tokenId);
         return ERC721_RECEIVED;
     }
         
-    function attachERC721(EIP721Interface _erc721, uint256 _value) isAttestor(Authorization.Attachment) public {
+    function attachERC721(IERC721 _erc721, uint256 _value) isAttestor(Authorization.Attachment) public {
         require(!campaignIssued);
         require(_value >= issuance);
-        require(_erc721.balanceOf(this) >= issuance);
+        require(_erc721.balanceOf(address(this)) >= issuance);
         require(erc721TokenIds.length >= issuance);
         attachments.push(Attachment({
             class: AttachmentClass.ERC721,
@@ -165,18 +166,18 @@ contract SimpleRougeCampaign {
     bool public campaignIssued;
     uint public campaignExpiration;
 
-    event Issuance(bytes4 scheme, string name, uint campaignExpiration);
+    event Issuance(bytes2 indexed version, address indexed issuer, bytes4 indexed scheme, string name, uint campaignExpiration);
 
-    function issue(bytes4 _scheme, string _name, uint _campaignExpiration) isAttestor(Authorization.Issuance) public {
+    function issue(bytes4 _scheme, string memory _name, uint _campaignExpiration) isAttestor(Authorization.Issuance) public {
         require(!campaignIssued);
 
         // still possible to send RGE post creation, before issuing the campaign
-        uint256 rgeBalance = rge.balanceOf(this);
+        uint256 rgeBalance = rge.balanceOf(address(this));
         require(rgeBalance >= issuance * tare);
 
-        // XXX minimum campaign duration 1 day, maximum 120 days (could be a param for tare ?)
-        require(_campaignExpiration >= now + 60*60*24);
-        require(_campaignExpiration <= now + 60*60*24*120);
+        // minimum campaign duration 12 hours, maximum 360 days (XXX could be a param for tare ?)
+        require(_campaignExpiration >= now + 60*60*12);
+        require(_campaignExpiration <= now + 60*60*24*360);
         
         name = _name;
         campaignIssued = true;
@@ -184,20 +185,20 @@ contract SimpleRougeCampaign {
         available = issuance;
         scheme = _scheme;
 
-        emit Issuance(_scheme, _name, _campaignExpiration);
+        emit Issuance(version, issuer, _scheme, _name, _campaignExpiration);
     }    
 
     // Authorization is handled by issue()
-    function issueWithAttestor(bytes4 _scheme, string _name, uint _campaignExpiration, address _attestor, Authorization[] _auths) public {
+    function issueWithAttestor(bytes4 _scheme, string memory _name, uint _campaignExpiration, address _attestor, Authorization[] memory _auths) public {
         issue(_scheme, _name, _campaignExpiration);
         addAttestor(_attestor, _auths);
     }
     
-    function getInfo() public view returns (bytes) {
+    function getInfo() public view returns (bytes memory) {
         return abi.encodePacked(issuer, scheme, campaignExpiration, name);
     }
 
-    function getState() public view returns (bytes) {
+    function getState() public view returns (bytes memory) {
         return abi.encodePacked(issuance, campaignIssued, available, acquired, redeemed);
     }
 
@@ -216,7 +217,7 @@ contract SimpleRougeCampaign {
     
     event Acquisition(address indexed bearer);
 
-    function acquisition(address _bearer) CampaignOpen private returns (bool success) {
+    function acquisition(address payable _bearer) CampaignOpen private returns (bool success) {
         require(_bearer != issuer);                 /* RULE: issuer and bearer need to be diffrent */
         require(!hasNote(_bearer));                 /* RULE: only one note per address */
         /* require(!transferRegister[_bearer]);        /* RULE transfer is not reversible */
@@ -243,7 +244,7 @@ contract SimpleRougeCampaign {
         return acquisition(msg.sender);
     }
     
-    function distributeNote(address _bearer) CampaignOpen isAttestor(Authorization.Acquisition) public returns (bool success) {
+    function distributeNote(address payable _bearer) CampaignOpen isAttestor(Authorization.Acquisition) public returns (bool success) {
         return acquisition(_bearer);
     }
     
@@ -267,7 +268,7 @@ contract SimpleRougeCampaign {
 
     event Redemption(address indexed bearer);
 
-    function redemption(address _bearer) CampaignOpen private returns (bool success) {
+    function redemption(address payable _bearer) CampaignOpen private returns (bool success) {
         require(hasNote(_bearer));
         require(!hasRedeemed(_bearer));
         redeemed += 1;
@@ -278,13 +279,13 @@ contract SimpleRougeCampaign {
                 _bearer.transfer( attachments[i].qty );
             }
             if (attachments[i].class == AttachmentClass.ERC20) {
-                EIP20Interface _erc20 = EIP20Interface(attachments[i].caller);
+                IERC20 _erc20 = IERC20(attachments[i].caller);
                 _erc20.transfer(_bearer, attachments[i].qty );
             }
             if (attachments[i].class == AttachmentClass.ERC721) {
-                EIP721Interface _erc721 = EIP721Interface(attachments[i].caller);
+                IERC721 _erc721 = IERC721(attachments[i].caller);
                 for (uint j = 0; j < attachments[i].qty; j++) {
-                    _erc721.safeTransferFrom(this, _bearer, erc721TokenIds[erc721TokenIds.length - 1]);
+                    _erc721.safeTransferFrom(address(this), _bearer, erc721TokenIds[erc721TokenIds.length - 1]);
                     erc721TokenIds.length--;
                 }
             }
@@ -303,14 +304,14 @@ contract SimpleRougeCampaign {
         return redemption(msg.sender);
     }
         
-    function acceptRedemption(address _bearer, bytes32 _hash, uint8 v, bytes32 r, bytes32 s)
+    function acceptRedemption(address payable _bearer, bytes32 _hash, uint8 v, bytes32 r, bytes32 s)
         CampaignOpen isAttestor(Authorization.Redemption) public returns (bool success) {
         require(_hash == keccak256(abi.encodePacked('acceptRedemption', this, _bearer)));
         require(ecrecover(RougeCampaign.prefixed(_hash), v, r, s) == _bearer);
         return redemption(_bearer);
     }
         
-    function getWorkflow(address _bearer) public view returns (bytes) {
+    function getWorkflow(address _bearer) public view returns (bytes memory) {
         return abi.encodePacked(hasNote(_bearer), hasRedeemed(_bearer));
     } 
     
@@ -326,18 +327,18 @@ contract SimpleRougeCampaign {
 
         for (uint i = 0; i < attachments.length; i++) {
             if (attachments[i].class == AttachmentClass.ERC20) {
-                EIP20Interface _erc20 = EIP20Interface(attachments[i].caller);
+                IERC20 _erc20 = IERC20(attachments[i].caller);
                  _erc20.approve(issuer, attachments[i].qty * issuance);
             }
             if (attachments[i].class == AttachmentClass.ERC721) {
-                EIP721Interface _erc721 = EIP721Interface(attachments[i].caller);
+                IERC721 _erc721 = IERC721(attachments[i].caller);
                 _erc721.setApprovalForAll(issuer, true);
             }
         } 
         
         // transfer all remaining RGE tokens and ETH to the issuer
         
-        if ( rge.transfer(issuer, rge.balanceOf(this)) ) {
+        if ( rge.transfer(issuer, rge.balanceOf(address(this))) ) {
             selfdestruct(issuer);
         } 
 

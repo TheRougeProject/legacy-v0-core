@@ -1,50 +1,36 @@
-# The Rouge Project - beta code factory and campaign contracts to be used with the RGE token
+# The Rouge Project - factory and campaign contracts
 
-WARNING: The Rouge token [RGE] has been audited but not yet the factory. So, please do your own due diligences if you
-decide to use this code on a production network (Ethereum mainnet, POA, etc). You may lose your RGE deposit, ETH, POA
-and/or any ERC20, ERC721 tokens sent as attachment to a campaign.
+> solidity contracts used by the Rouge protocol
 
-WARNING : this is NON AUDITED code. Use on testnet or with extreme caution.
+The Rouge protocol is an open-source blockchain voucher and note
+protocol built as a suite of smart contracts using a specific token —
+the Rouge token — on Ethereum compatible blockchains (tested on
+Ethereum and POA).
 
-The project use the truffle framework (http://truffleframework.com/)
+Rouge is for all types of usage of non-repudiable and unique usage
+digital vouchers (for example, e-tickets, e-coupons, cashback notes,
+etc).
 
-## Versioning
+This package includes low-level implementation of the protocol
+in solidity.
 
-The project follows Semantic Versioning 2.0.0 : see https://semver.org/
+The Javascript [rouge.js](https://github.com/TheRougeProject/rouge.js)
+library, is a far simpler and recomended method to use the protocol
+than using these contracts directly.
+
+Please check out the [Rouge protocol docs](https://rouge.network/docs/).
 
 ## How to run tests :
 
-### 1. install truffle :
-
-```
-  npm install -g truffle
-```
-### 2. launch the tests
-
-```
-  truffle test
+``` bash
+cd rouge-protocol-solidity
+npm install
+npm run test
 ```
 
-## Creating a campaign :
+## Introduction on the low level implementation of the protocol
 
-1. You should have a minimum of RGE tokens on the Ethereum address creating the campaign (issuer) :
-
-   mim RGE = number of notes to be issued * tare price.
-
-The tare price is now set to be 0.1 RGE (as per the white paper, tare will be raised to 1 RGE as usage of
-the network grow).
-
-2. Call the function newCampaign(issuance, deposit)
-
-   issuance = number of notes to be created/issued
-
-   deposit = RGE that you move to the campaign as deposit (should equal or more than mim RGE)
-
-3. Read the introduction on medium :
-
-   https://medium.com/the-rouge-project/getting-started-with-the-rouge-protocol-9a335079e69e
-
-4. Enjoy :)
+https://medium.com/the-rouge-project/getting-started-with-the-rouge-protocol-9a335079e69e
 
 
 ### Licensed under GNU AFFERO GENERAL PUBLIC LICENSE v3

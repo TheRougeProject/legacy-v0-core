@@ -1,6 +1,6 @@
 {
   "name": "rouge-protocol-solidity",
-  "version": "0.17.0",
+  "version": "0.21.0",
   "description": "Solidity contracts for the Rouge protocol (voucher, coupon, ticket, note on Ethereum)",
   "main": "",
   "files": [
@@ -23,9 +23,9 @@
   "license": "AGPL-3.0-only",
   "repository": "TheRougeProject/rouge-protocol-solidity",
   "scripts": {
-    "prepublish": "yarn run build",
-    "precommit": "yarn run test",
-    "prepush": "yarn run test",
+    "prepublish": "npm run build",
+    "precommit": "npm run test",
+    "prepush": "npm run test",
     "release": "release-it",
     "test": "truffle test",
     "build": "truffle compile"
@@ -39,11 +39,11 @@
     "access": "public"
   },
   "devDependencies": {
-    "eth-sig-util": "^2.1.0",
-    "ethereumjs-abi": "^0.6.5",
-    "ethereumjs-util": "^5.2.0",
-    "hex64": "^0.4.0",
-    "release-it": "^10.4.0",
-    "remixd": "^0.1.8-alpha.5"
+    "@openzeppelin/contracts": "2.4.0",
+    "@truffle/contract": "^4.1.9",
+    "ethereumjs-abi": "^0.6.8",
+    "ethereumjs-util": "^6.2.0",
+    "release-it": "^12.4.3",
+    "truffle": "^5.1.13"
   }
 }

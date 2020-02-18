@@ -1,10 +1,9 @@
 
-const abi = require('ethereumjs-abi')
-const BN = require('bn.js')
-const ethUtil = require('ethereumjs-util')
+const { newTestCampaign, getBalanceInFinney, authHash, protocolSig } = require('./utils.js');
 
-const EIP20 = artifacts.require("./EIP20.sol");
-const EIP721 = artifacts.require("./contrib/openzeppelin/mocks/ERC721BasicTokenMock.sol");
+const truffleContract = require("@truffle/contract")
+const EIP20 = require("@openzeppelin/contracts/build/contracts/ERC20Mock.json");
+const EIP721 = require("@openzeppelin/contracts/build/contracts/ERC721Mock.json");
 
 const RGEToken = artifacts.require("./TestRGEToken.sol");
 const Factory = artifacts.require("./RougeFactory.sol");
@@ -14,41 +13,6 @@ const tare = 0.1 * 10**6;          /* tare price is 0.1 rge in beta phase */
 const tokens  = 1000 * 10**6;      /* issuer RGE tokens before campaign start */
 const gas = 5000778
             
-const new_campaign = async function(rge, issuer, issuance, deposit) {
-
-  const factory = await Factory.deployed();
-
-  const issuer_balance_before = await rge.balanceOf.call(issuer);
-
-  /* refill issuer tokens to test starting value */
-  await rge.giveMeRGE(tokens - issuer_balance_before, {from: issuer});
-
-  await rge.newCampaign(issuance, deposit, {from: issuer, gas: gas, gasPrice: web3.toWei(1, "gwei")})
-  const campaign_address = await factory.get_last_campaign.call(issuer);
-
-  return SimpleRougeCampaign.at(campaign_address);
-
-}
-
-const create_auth_hash = function(msg, campaign, account) {
-
-  return '0x' + abi.soliditySHA3(
-    [ "string", "address", "address" ], [ msg, new BN(campaign, 16), new BN(account, 16) ]
-  ).toString('hex')
-  
-}
-
-const get_signature = function(account, msg) {
-
-  const signature = web3.eth.sign(account, ethUtil.bufferToHex(ethUtil.toBuffer(msg))).substr(2)
-  return {
-    r: '0x' + signature.slice(0, 64),
-    s: '0x' + signature.slice(64, 128),
-    v: web3.toDecimal( '0x' + signature.slice(128, 130) ) + 27
-  }
-  
-}
-
 contract('SimpleRougeCampaign(Attachments)', function(accounts) {
 
   it("SimpleRougeCampaign with fuel attachment", async function() {
@@ -62,36 +26,38 @@ contract('SimpleRougeCampaign(Attachments)', function(accounts) {
 
     const fuel_attachment = 1000; // 1 eth, i.e. 100 finney per voucher
     
-    const campaign = await new_campaign(rge, issuer, issuance, deposit);
+    const campaign = await newTestCampaign(rge, issuer, issuance, deposit, tokens);
 
-    const tx_attachFuel = await campaign.attachFuel({from: issuer, value: web3.toWei(1000, "finney")});
-
-    const campaignBalance = await web3.fromWei(web3.eth.getBalance(campaign.address), 'finney');
+    const tx_attachFuel = await campaign.attachFuel({from: issuer, value: web3.utils.toWei(fuel_attachment.toString(), "finney")});
+    const campaignBalance = await getBalanceInFinney(campaign.address)
     assert.equal(campaignBalance, fuel_attachment, "fuel attachement transfered");
     
     const expiration = Math.trunc((new Date()).getTime() / 1000) + 60*60*24*2
     await campaign.issue('0x0200ee00', 'test', expiration, {from: issuer});
     await campaign.distributeNote(bearer, {from: issuer});
 
-    const bearerBalance_before = await web3.toDecimal(web3.fromWei(web3.eth.getBalance(bearer), 'finney')); // 100000
+    const bearerBalance_before = await getBalanceInFinney(bearer)
 
-    const auth = create_auth_hash('acceptRedemption', campaign.address, bearer)
-    const sign = get_signature(bearer, 'Rouge ID: ' + auth.substr(2))
+    const auth = authHash('acceptRedemption', campaign.address, bearer)
+    const sign = protocolSig(bearer, auth)
     await campaign.acceptRedemption(bearer, auth, sign.v, sign.r, sign.s, {from: issuer});
 
-    const bearerBalance_after = await web3.toDecimal(web3.fromWei(web3.eth.getBalance(bearer), 'finney'));
-    assert.equal(bearerBalance_after, bearerBalance_before + (fuel_attachment / issuance), "attachment redeemed");
+    const bearerBalance_after = await getBalanceInFinney(bearer)
+    assert.equal(
+      bearerBalance_after,
+      web3.utils.toBN(bearerBalance_before).add(web3.utils.toBN(fuel_attachment / issuance)),
+      "attachment redeemed"
+    );
     
     await campaign.kill({from: issuer});
 
     const campaign_balance_after = await rge.balanceOf.call(campaign.address);
     assert.equal(campaign_balance_after.toNumber(), 0, "the campaign has no more rge after kill");
 
-    const campaign_fuel_balance_after = await web3.fromWei(web3.eth.getBalance(campaign.address), 'finney');
-    assert.equal(campaign_fuel_balance_after.toNumber(), 0, "the campaign has no more fuel attached after kill");
-    
-  });  
+    const campaign_fuel_balance_after = await getBalanceInFinney(campaign.address)
+    assert.equal(campaign_fuel_balance_after, 0, "the campaign has no more fuel attached after kill");
 
+  });
 
   it("SimpleRougeCampaign with ERC20 attachment", async function() {
 
@@ -103,10 +69,13 @@ contract('SimpleRougeCampaign(Attachments)', function(accounts) {
     const deposit  = 50 * 10**6;
 
     const erc20_attachment = 768; // i.e. 76 per voucher
-    
-    const campaign = await new_campaign(rge, issuer, issuance, deposit);
 
-    const erc20 = await EIP20.new(1000000,'ERC', 0,'ERC', {from: issuer});
+    const campaign = await newTestCampaign(rge, issuer, issuance, deposit, tokens);
+
+    const ERC20 = truffleContract(EIP20)
+    ERC20.setProvider(web3.currentProvider);
+    const erc20 = await ERC20.new(issuer, erc20_attachment * 10, {from: issuer});
+
     await erc20.approve(campaign.address, erc20_attachment, {from: issuer});
 
     const tx_attach = await campaign.attachERC20(erc20.address, erc20_attachment, {from: issuer});
@@ -121,11 +90,12 @@ contract('SimpleRougeCampaign(Attachments)', function(accounts) {
     const bearerBalance_before = await erc20.balanceOf.call(bearer);
     assert.equal(bearerBalance_before.toNumber(), 0, "no erc20 before redemption");
 
-    const auth = create_auth_hash('acceptRedemption', campaign.address, bearer)
-    const sign = get_signature(bearer, 'Rouge ID: ' + auth.substr(2))
+    const auth = authHash('acceptRedemption', campaign.address, bearer)
+    const sign = protocolSig(bearer, auth)
     await campaign.acceptRedemption(bearer, auth, sign.v, sign.r, sign.s, {from: issuer});
 
     const bearerBalance_after = await erc20.balanceOf.call(bearer);
+
     assert.equal(bearerBalance_after.toNumber(), bearerBalance_before.toNumber() + Math.trunc(erc20_attachment / issuance), "attachment redeemed");
     
     await campaign.kill({from: issuer});
@@ -141,10 +111,10 @@ contract('SimpleRougeCampaign(Attachments)', function(accounts) {
     const campaign_balance_after = await rge.balanceOf.call(campaign.address);
     assert.equal(campaign_balance_after.toNumber(), 0, "the campaign has no more rge after kill");
 
-    const campaign_fuel_balance_after = await web3.fromWei(web3.eth.getBalance(campaign.address), 'finney');
-    assert.equal(campaign_fuel_balance_after.toNumber(), 0, "the campaign has no more fuel attached after kill");
-    
-  });  
+    const campaign_fuel_balance_after = await getBalanceInFinney(campaign.address);
+
+    assert.equal(campaign_fuel_balance_after, '0', "the campaign has no more fuel attached after kill");
+  });
 
   it("SimpleRougeCampaign with ERC721 attachment", async function() {
 
@@ -157,17 +127,19 @@ contract('SimpleRougeCampaign(Attachments)', function(accounts) {
 
     const erc721_attachment = issuance * 2; // 2 erc721 per voucher
     
-    const campaign = await new_campaign(rge, issuer, issuance, deposit);
+    const campaign = await newTestCampaign(rge, issuer, issuance, deposit, tokens);
 
-    const erc721 = await EIP721.new({from: issuer});
+    const ERC721 = truffleContract(EIP721)
+    ERC721.setProvider(web3.currentProvider);
+    const erc721 = await ERC721.new({from: issuer});
 
     const campaignBalance_before = await erc721.balanceOf.call(campaign.address);
     assert.equal(campaignBalance_before, 0, "no erc721 transfered yet");
     
     var i
     for (i = 0; i < erc721_attachment; i++) {
-      const tx_mint = await erc721.mint(accounts[0], i);
-      const tx_transfer = await erc721.safeTransferFrom(accounts[0], campaign.address, i);
+      const tx_mint = await erc721.mint(accounts[0], i, {from: issuer});
+      const tx_transfer = await erc721.safeTransferFrom(accounts[0], campaign.address, i, {from: accounts[0]});
     } 
 
     const campaignBalance_after = await erc721.balanceOf.call(campaign.address);
@@ -182,8 +154,8 @@ contract('SimpleRougeCampaign(Attachments)', function(accounts) {
     const bearerBalance_before = await erc721.balanceOf.call(bearer);
     assert.equal(bearerBalance_before.toNumber(), 0, "no erc721 before redemption");
 
-    const auth = create_auth_hash('acceptRedemption', campaign.address, bearer)
-    const sign = get_signature(bearer, 'Rouge ID: ' + auth.substr(2))
+    const auth = authHash('acceptRedemption', campaign.address, bearer)
+    const sign = protocolSig(bearer, auth)
     await campaign.acceptRedemption(bearer, auth, sign.v, sign.r, sign.s, {from: issuer});
 
     const bearerBalance_after = await erc721.balanceOf.call(bearer);
@@ -202,12 +174,10 @@ contract('SimpleRougeCampaign(Attachments)', function(accounts) {
     const campaign_balance_after = await rge.balanceOf.call(campaign.address);
     assert.equal(campaign_balance_after.toNumber(), 0, "the campaign has no more rge after kill");
 
-    const campaign_fuel_balance_after = await web3.fromWei(web3.eth.getBalance(campaign.address), 'finney');
-    assert.equal(campaign_fuel_balance_after.toNumber(), 0, "the campaign has no more fuel attached after kill");
+    const campaign_fuel_balance_after = await getBalanceInFinney(campaign.address);
+    assert.equal(campaign_fuel_balance_after, '0', "the campaign has no more fuel attached after kill");
     
-  });  
-
-
+  });
   
 });
 

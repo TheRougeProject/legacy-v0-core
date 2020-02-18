@@ -1,41 +1,9 @@
 
-const abi = require('ethereumjs-abi')
-const BN = require('bn.js')
-const ethUtil = require('ethereumjs-util')
+const { createLockHash, createSealHash, createUnlockHash, zeroAddress, bridgeSig } = require('./utils.js');
 
 const RGEToken = artifacts.require("./TestRGEToken.sol");
 const RougeBridge = artifacts.require("./RougeBridge.sol");
 const BridgeRGEToken = artifacts.require("./BridgeRGEToken.sol");
-
-const createLockHash = function(user, deposit, foreign_network, bridge, depositBlock) {
-  return '0x' + abi.soliditySHA3(
-    [ "address", "uint", "uint", "address", "uint" ],
-    [ new BN(user, 16), deposit, foreign_network, new BN(bridge, 16), depositBlock ]
-  ).toString('hex')
-}
-
-const createSealHash = function(hash, v, r, s, lockBlock) {
-  return '0x' + abi.soliditySHA3(
-    [ "bytes32", "uint8", "bytes32", "bytes32", "uint" ],
-    [ hash, v, r, s, lockBlock ]
-  ).toString('hex')
-}
-
-const createUnlockHash = function(user, foreign_network, bridge, depositBlock) {
-  return '0x' + abi.soliditySHA3(
-    [ "address", "uint", "address", "uint" ],
-    [ new BN(user, 16), foreign_network, new BN(bridge, 16), depositBlock ]
-  ).toString('hex')
-}
-
-const getAccountSignature = function(hash, account) {
-  const signature = web3.eth.sign(account, ethUtil.bufferToHex(ethUtil.toBuffer('Bridge fct: ' + hash.substr(2)))).substr(2)
-  return {
-    r: '0x' + signature.slice(0, 64),
-    s: '0x' + signature.slice(64, 128),
-    v: web3.toDecimal( '0x' + signature.slice(128, 130) ) + 27
-  }  
-}
 
 contract('BridgeRGEToken', function(accounts) {
   
@@ -62,9 +30,7 @@ contract('BridgeRGEToken', function(accounts) {
     const symbol = await f_rge.symbol.call()
     assert.equal(symbol, 'f_RGE', "correct symbol");
 
-
-    
-  });  
+  });
 
 
   it("Claim tokens locked in home bridge", async function() {
@@ -91,11 +57,11 @@ contract('BridgeRGEToken', function(accounts) {
 
     await bridge.adminBridge(foreign_network, true, home_validator, foreign_validator)
 
-    const tx = await bridge.deposit(deposit, foreign_network, {from: user, gas: 67431 +20000, gasPrice: web3.toWei(1, "gwei")})
+    const tx = await bridge.deposit(deposit, foreign_network, {from: user, gas: 67431 +30000, gasPrice: web3.utils.toWei('1', "gwei")})
     const depositBlock = tx.receipt.blockNumber;
 
     const lockHash = createLockHash(user, deposit, foreign_network, bridge.address, depositBlock)
-    const signLock = getAccountSignature(lockHash, foreign_validator)    
+    const signLock = bridgeSig(foreign_validator, lockHash)
     const lock_tx = await bridge.lockEscrow(lockHash, user, foreign_network, depositBlock, signLock.v, signLock.r, signLock.s, {from: home_validator});
     const lockBlock = lock_tx.receipt.blockNumber;
     const expected_seal = createSealHash(lockHash, signLock.v, signLock.r, signLock.s, lockBlock);
@@ -104,16 +70,16 @@ contract('BridgeRGEToken', function(accounts) {
 
     // owner is create the Auth Hash (to be used on foreign chain)
 
-    const signAuth = getAccountSignature(seal, home_validator);    
+    const signAuth = bridgeSig(home_validator, seal);
     const auth_tx = await bridge.createAuth(user, foreign_network, depositBlock, signAuth.v, signAuth.r, signAuth.s, {from: home_validator});
 
-    const event_BridgeAuth_sign = web3.sha3('BridgeAuth(address,uint256,uint256,uint8,bytes32,bytes32)')
-    auth_tx.receipt.logs.forEach( function(e) {
+    const event_BridgeAuth_sign = web3.utils.sha3('BridgeAuth(address,uint256,uint256,uint8,bytes32,bytes32)')
+    auth_tx.receipt.rawLogs.forEach( function(e) {
       if (e.topics[0] === event_BridgeAuth_sign) {
-        assert.equal(e.topics[1].slice(26, 66), user.substr(2), "user coherent in log");
-        assert.equal(web3.toDecimal( e.topics[2] ), foreign_network , "coherent foreign_network");
-        assert.equal(web3.toDecimal( e.topics[3] ), depositBlock, "coherent block number");
-        assert.equal(web3.toDecimal(e.data.slice(0, 66)), signAuth.v, "sign v ok");
+        assert.equal(e.topics[1].slice(26, 66), user.substr(2).toLowerCase(), "user coherent in log");
+        assert.equal(web3.utils.hexToNumber( e.topics[2] ), foreign_network , "coherent foreign_network");
+        assert.equal(web3.utils.hexToNumber( e.topics[3] ), depositBlock, "coherent block number");
+        assert.equal(web3.utils.hexToNumber(e.data.slice(0, 66)), signAuth.v, "sign v ok");
         assert.equal('0x' + e.data.slice(66, 130), signAuth.r, "sign r ok");
         assert.equal('0x' + e.data.slice(130, 194), signAuth.s, "sign s ok");
       }
@@ -145,7 +111,7 @@ contract('BridgeRGEToken', function(accounts) {
 
 
     const hash2 = createUnlockHash(user, foreign_network, bridge.address, depositBlock)
-    const sign2 = getAccountSignature(hash2, foreign_validator)
+    const sign2 = bridgeSig(foreign_validator, hash2)
     const repudiate_tx = await f_rge.repudiate(hash2, user, depositBlock, sign2.v, sign2.r, sign2.s, {from: foreign_validator});
 
     /* ########## BACK ON HOME CHAIN ########## */

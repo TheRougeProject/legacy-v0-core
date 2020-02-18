@@ -4,11 +4,11 @@
 
 */
 
-pragma solidity ^0.4.24;
+pragma solidity >=0.5.0 <0.7.0;
 
-import "./EIP20Interface.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract RGETokenInterface is EIP20Interface {
+contract RGETokenInterface is IERC20 {
     
     mapping (address => uint256) public balances;
 

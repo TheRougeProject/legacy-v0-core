@@ -4,7 +4,7 @@
 
 */
 
-pragma solidity ^0.4.24;
+pragma solidity >=0.5.0 <0.7.0;
 
 import "./RGETokenInterface.sol";
 
@@ -53,7 +53,7 @@ contract RougeBridge {
         require(_value > 0);                                         
         require(escrow[msg.sender][_network][block.number] == 0);         // only 1 deposit per user/network/block maximum
         assert(escrowSeal[msg.sender][_network][block.number] == bytes32(0));        // there can't be seal already, but let's double check
-        require(rge.transferFrom(msg.sender, this, _value));              // transfer tokens to this home bridge contract
+        require(rge.transferFrom(msg.sender, address(this), _value));              // transfer tokens to this home bridge contract
         emit BridgeDeposit(msg.sender, _network, block.number, _value);
         escrow[msg.sender][_network][block.number] = _value;
     }
@@ -69,21 +69,21 @@ contract RougeBridge {
         emit BridgeWithdraw(msg.sender, _network, _depositBlock, _value);
     }
 
-    function getHexString(bytes32 value) internal pure returns (string) {
+    function getHexString(bytes32 value) internal pure returns (string memory) {
         bytes memory result = new bytes(64);
         string memory characterString = "0123456789abcdef";
         bytes memory characters = bytes(characterString);
         for (uint8 i = 0; i < 32; i++) {
-            result[i * 2] = characters[uint256((value[i] & 0xF0) >> 4)];
-            result[i * 2 + 1] = characters[uint256(value[i] & 0xF)];
+            result[i * 2] = characters[(uint8(value[i]) & 0xF0) >> 4];
+            result[i * 2 + 1] = characters[uint8(value[i]) & 0xF];
         }
         return string(result);
     }
 
+    // web3.eth.sign compat prefix
     function prefixed(bytes32 _hash) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n76Bridge fct: ", getHexString(_hash)));
     }
-    
 
     // Calculating the seal and locking the deposit (foreign authority needs to undersign this)
 
