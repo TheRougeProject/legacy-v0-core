@@ -1,5 +1,5 @@
 {
-  "name": "Rouge Project Token List",
+  "name": "Rouge Token List",
   "logoURI": "https://rouge.network/logo-100.png",
   "keywords": [
     "solidity",
@@ -33,6 +33,6 @@
   "version": {
     "major": 1,
     "minor": 0,
-    "patch": 0
+    "patch": 1
   }
 }
