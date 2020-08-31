@@ -2,8 +2,8 @@
 const { newTestCampaign, getBalanceInFinney, authHash, protocolSig } = require('./utils.js');
 
 const truffleContract = require("@truffle/contract")
-const EIP20 = require("@openzeppelin/contracts/build/contracts/ERC20Mock.json");
-const EIP721 = require("@openzeppelin/contracts/build/contracts/ERC721Mock.json");
+const EIP20 = require("@openzeppelin/contracts/build/contracts/ERC20.json");
+const EIP721 = require("@openzeppelin/contracts/build/contracts/ERC721.json");
 
 const RGEToken = artifacts.require("./TestRGEToken.sol");
 const Factory = artifacts.require("./RougeFactory.sol");

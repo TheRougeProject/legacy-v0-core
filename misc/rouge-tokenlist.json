@@ -1,0 +1,38 @@
+{
+  "name": "Rouge Project Token List",
+  "logoURI": "https://rouge.network/logo-100.png",
+  "keywords": [
+    "solidity",
+    "ethereum",
+    "rge",
+    "rouge",
+    "coupon",
+    "voucher",
+    "ticket"
+  ],
+  "tags": {
+    "rouge": {
+      "name": "The Rouge Project",
+      "description": "open-source blockchain voucher and note protocol"
+    }
+  },
+  "timestamp": "2020-08-31T00:00:00+00:00",
+  "tokens": [
+    {
+      "chainId": 1,
+      "address": "0x96Cd136F1aFB1f8934E6Cb6495Eaf24140f70325",
+      "symbol": "RGE",
+      "name": "Rouge",
+      "decimals": 6,
+      "logoURI": "https://rouge.network/logo-100.png",
+      "tags": [
+        "voucher"
+      ]
+    }
+  ],
+  "version": {
+    "major": 1,
+    "minor": 0,
+    "patch": 0
+  }
+}
