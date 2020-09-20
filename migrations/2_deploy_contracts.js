@@ -8,25 +8,7 @@ const RougeBridge = artifacts.require("./RougeBridge.sol")
 
 module.exports = async function(deployer, network) {
 
-  const rgeAddress = {
-    sokol: '0x5475300766433dd082a7340fc48a445c483df68f'
-  }
-
-  if (network && rgeAddress[network]) {
-
-    const rge = await RGETokenInterface.at(rgeAddress[network])
-
-    await deployer.deploy(RougeFactory)
-    const factory = await RougeFactory.deployed()
-
-    const results = await Promise.all([
-      rge.setFactory(factory.address),
-      factory.setParams(rge.address, 100000)
-    ]);
-
-    console.log('results', results)
-
-    } else if (false) {
+  if (['test'].includes(network)) {
 
     await Promise.all([
       deployer.deploy(TestRGEToken),
@@ -47,6 +29,27 @@ module.exports = async function(deployer, network) {
       rge.setFactory(factory.address),
       factory.setParams(rge.address, 100000)
     ]);
+
+    return
+  }
+
+  const rgeAddress = {
+    sokol: '0x5475300766433dd082a7340fc48a445c483df68f'
+  }
+
+  if (network && rgeAddress[network]) {
+
+    const rge = await RGETokenInterface.at(rgeAddress[network])
+
+    await deployer.deploy(RougeFactory)
+    const factory = await RougeFactory.deployed()
+
+    const results = await Promise.all([
+      rge.setFactory(factory.address),
+      factory.setParams(rge.address, 100000)
+    ]);
+
+    console.log('results', results)
 
   }
 
