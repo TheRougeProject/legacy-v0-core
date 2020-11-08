@@ -1,6 +1,6 @@
 {
   "name": "rouge-protocol-solidity",
-  "version": "0.21.1",
+  "version": "0.21.2",
   "description": "Solidity contracts for the Rouge protocol (voucher, coupon, ticket, note on Ethereum)",
   "main": "",
   "files": [
@@ -47,8 +47,7 @@
     "release-it": "^14.2.1",
     "truffle": "^5.1.52",
     "pify": "^5.0.0",
-   "truffle-privatekey-provider": "^1.5.0"
+    "truffle-privatekey-provider": "^1.5.0"
   },
-  "dependencies": {
-  }
+  "dependencies": {}
 }
