@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only
 /*
 
   Same interface/code as RGEToken but for testnet networks
@@ -6,17 +7,14 @@
 
 */
 
-pragma solidity >=0.5.0 <0.7.0;
+pragma solidity ^0.6.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract TestRGEToken is ERC20 {
     
-    /* ERC20 */
-    string public name = 'TEST Rouge';
-    string public symbol = 'RGE';
-    uint8 public decimals = 6;
-    
+    uint8 DECIMALS = 6;
+
     /* RGEToken */
     address owner; 
     string public version = 'v0.6';
@@ -24,18 +22,19 @@ contract TestRGEToken is ERC20 {
     uint256 public   reserveY2 = 0;
 
     /* Testnet specific: set a maximum per address, minimum for owner for giveMeRGE function */
-    uint256 public  maxBalance =     100000 * 10**uint(decimals);
-    uint256 public    ownerMin =  300000000 * 10**uint(decimals);
+    uint256 public  maxBalance =     100000 * 10**uint(DECIMALS);
+    uint256 public    ownerMin =  300000000 * 10**uint(DECIMALS);
 
-    uint256 private _totalSupply = 1000000000 * 10**uint(decimals);
+    uint256 private _totalSupply = 1000000000 * 10**uint(DECIMALS);
 
     modifier onlyBy(address _address) {
         require(msg.sender == _address);
         _;
     }
     
-    constructor() public {
+    constructor() public ERC20("TEST Rouge", "RGE") {
         owner = msg.sender;
+        _setupDecimals(DECIMALS);
         _mint(owner, _totalSupply);
     }
     

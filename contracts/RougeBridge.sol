@@ -1,12 +1,13 @@
+// SPDX-License-Identifier: AGPL-3.0-only
 /*
 
   Bridge to send RGE in other chains (eg POA, ...)
 
 */
 
-pragma solidity >=0.5.0 <0.7.0;
+pragma solidity ^0.6.0;
 
-import "./RGETokenInterface.sol";
+import "./IRGEToken.sol";
 
 contract RougeBridge {
     
@@ -19,11 +20,11 @@ contract RougeBridge {
         _;
     }
 
-    RGETokenInterface public rge;
+    IRGEToken public rge;
 
     constructor(address _rge) public {
         owner = msg.sender;
-        rge = RGETokenInterface(_rge); 
+        rge = IRGEToken(_rge);
     }
 
     function newOwner(address _account) onlyBy(owner) public {

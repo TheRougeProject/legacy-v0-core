@@ -2,8 +2,8 @@
 const { newTestCampaign, getBalanceInFinney, authHash, protocolSig } = require('./utils.js');
 
 const truffleContract = require("@truffle/contract")
-const EIP20 = require("@openzeppelin/contracts/build/contracts/ERC20Mintable.json");
-const EIP721 = require("@openzeppelin/contracts/build/contracts/ERC721Mintable.json");
+const EIP20 = require("@openzeppelin/contracts/build/contracts/ERC20PresetMinterPauser.json");
+const EIP721 = require("@openzeppelin/contracts/build/contracts/ERC721PresetMinterPauserAutoId.json");
 
 const RGEToken = artifacts.require("./TestRGEToken.sol");
 const Factory = artifacts.require("./RougeFactory.sol");
@@ -74,7 +74,7 @@ contract('SimpleRougeCampaign(Attachments)', function(accounts) {
 
     const ERC20 = truffleContract(EIP20)
     ERC20.setProvider(web3.currentProvider);
-    const erc20 = await ERC20.new({from: issuer});
+    const erc20 = await ERC20.new('ERC20 TEST', 'XXX', {from: issuer});
     const tx_mint = await erc20.mint(issuer, erc20_attachment * 10, {from: issuer});
 
     await erc20.approve(campaign.address, erc20_attachment, {from: issuer});
@@ -132,14 +132,14 @@ contract('SimpleRougeCampaign(Attachments)', function(accounts) {
 
     const ERC721 = truffleContract(EIP721)
     ERC721.setProvider(web3.currentProvider);
-    const erc721 = await ERC721.new( {from: issuer});
+    const erc721 = await ERC721.new('ERC721 TEST', 'XXX', '#', {from: issuer});
 
     const campaignBalance_before = await erc721.balanceOf.call(campaign.address);
     assert.equal(campaignBalance_before, 0, "no erc721 transfered yet");
     
     var i
     for (i = 0; i < erc721_attachment; i++) {
-      const tx_mint = await erc721.mint(accounts[0], i, {from: issuer});
+      const tx_mint = await erc721.mint(accounts[0], {from: issuer});
       const tx_transfer = await erc721.safeTransferFrom(accounts[0], campaign.address, i, {from: accounts[0]});
     } 
 

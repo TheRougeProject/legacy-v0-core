@@ -1,14 +1,15 @@
+// SPDX-License-Identifier: AGPL-3.0-only
 /*
 
   Simple campaign contract
 
 */
 
-pragma solidity >=0.5.0 <0.7.0;
+pragma solidity ^0.6.0;
 
-import "./RGETokenInterface.sol";
+import "./IRGEToken.sol";
 
-import "./RougeFactoryInterface.sol";
+import "./IRougeFactory.sol";
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
@@ -37,10 +38,10 @@ contract SimpleRougeCampaign {
     bytes2 public version = 0x0021;
 
     // The Rouge Token contract address
-    RGETokenInterface public rge;
+    IRGEToken public rge;
 
     // Factory address & tare settings
-    RougeFactoryInterface public factory;
+    IRougeFactory public factory;
     uint256 public tare;
 
     address payable public issuer; // TODO owner != initial issuer
@@ -82,9 +83,9 @@ contract SimpleRougeCampaign {
 
         issuer = _issuer;
         issuance = _issuance;
-        rge = RGETokenInterface(_rge); 
+        rge = IRGEToken(_rge);
         tare = _tare;
-        factory = RougeFactoryInterface(_factory);
+        factory = IRougeFactory(_factory);
 
         // bootstrap role system
         isAuthorized[issuer][uint(Authorization.All)] = true;
@@ -286,7 +287,7 @@ contract SimpleRougeCampaign {
                 IERC721 _erc721 = IERC721(attachments[i].caller);
                 for (uint j = 0; j < attachments[i].qty; j++) {
                     _erc721.safeTransferFrom(address(this), _bearer, erc721TokenIds[erc721TokenIds.length - 1]);
-                    erc721TokenIds.length--;
+                    erc721TokenIds.pop();
                 }
             }
         }

@@ -1,10 +1,11 @@
+// SPDX-License-Identifier: AGPL-3.0-only
 /*
 
   Simple Rouge factory and campaign contracts
 
 */
 
-pragma solidity >=0.5.0 <0.7.0;
+pragma solidity ^0.6.0;
 
 import "./SimpleRougeCampaign.sol";
 
@@ -13,7 +14,7 @@ contract RougeFactory {
     bytes2 public version = 0x0021;
 
     // The Rouge Token contract address
-    RGETokenInterface public rge;
+    IRGEToken public rge;
     uint256 public tare;
     
     address owner;
@@ -30,7 +31,7 @@ contract RougeFactory {
     event SetFactory(address indexed _rge, uint256 _tare);
 
     function setParams (address _rge, uint256 _tare) onlyBy(owner) public {
-        rge = RGETokenInterface(_rge); 
+        rge = IRGEToken(_rge);
         tare = _tare;
         emit SetFactory(_rge, tare);
     }

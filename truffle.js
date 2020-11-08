@@ -2,12 +2,20 @@
 const PrivateKeyProvider = require("truffle-privatekey-provider");
 
 module.exports = {
-  solc: {
-    optimizer: {
-      enabled: true,
-      runs: 2000
+
+  compilers: {
+    solc: {
+      version: "0.6.12",
+      settings: {
+        optimizer: {
+          enabled: true,
+          runs: 2000
+        },
+        //  evmVersion: "byzantium"
+      }
     }
   },
+
   networks: {
     local: {
       host: "localhost",
