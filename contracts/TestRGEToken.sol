@@ -7,7 +7,7 @@
 
 */
 
-pragma solidity ^0.6.0;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
@@ -32,12 +32,15 @@ contract TestRGEToken is ERC20 {
         _;
     }
     
-    constructor() public ERC20("TEST Rouge", "RGE") {
+    constructor() ERC20("TEST Rouge", "RGE") {
         owner = msg.sender;
-        _setupDecimals(DECIMALS);
         _mint(owner, _totalSupply);
     }
     
+    function decimals() public view override returns (uint8) {
+        return DECIMALS;
+    }
+
     function giveMeRGE(uint256 _value) public returns (bool success) {
         require(balanceOf(msg.sender) + _value <= maxBalance);
         require(balanceOf(owner) >= ownerMin + _value);

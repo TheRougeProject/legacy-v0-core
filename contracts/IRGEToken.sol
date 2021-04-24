@@ -1,11 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-/*
 
-  RGE token Interface
-
-*/
-
-pragma solidity ^0.6.0;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 

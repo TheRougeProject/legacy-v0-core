@@ -1,9 +1,9 @@
 
-const RGETokenInterface = artifacts.require("./RGETokenInterface.sol")
+const IRGEToken = artifacts.require("./IRGEToken.sol")
 const TestRGEToken = artifacts.require("./TestRGEToken.sol")
-const RougeFactory = artifacts.require("./RougeFactory.sol")
+const RougeFactory = artifacts.require("./v0/RougeFactory.sol")
 
-const RougeBridge = artifacts.require("./RougeBridge.sol")
+const RougeBridge = artifacts.require("./v0/RougeBridge.sol")
 // const BridgeRGEToken = artifacts.require("./BridgeRGEToken.sol")
 
 module.exports = async function(deployer, network) {
@@ -39,7 +39,7 @@ module.exports = async function(deployer, network) {
 
   if (network && rgeAddress[network]) {
 
-    const rge = await RGETokenInterface.at(rgeAddress[network])
+    const rge = await IRGEToken.at(rgeAddress[network])
 
     await deployer.deploy(RougeFactory)
     const factory = await RougeFactory.deployed()

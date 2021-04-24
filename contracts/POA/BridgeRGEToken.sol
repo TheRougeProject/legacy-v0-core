@@ -7,7 +7,7 @@
 
 */
 
-pragma solidity ^0.6.0;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
@@ -32,15 +32,18 @@ contract BridgeRGEToken is ERC20 {
     address public homeBridge;               
     address public homeValidator;         /* validator in the RougeBridge contract on the home RGE network */
 
-    constructor(uint _network, address _validator, address _homeBridge, address _homeValidator, string memory _name, string memory _symbol) public ERC20(_name, _symbol)  {
+    constructor(uint _network, address _validator, address _homeBridge, address _homeValidator, string memory _name, string memory _symbol) ERC20(_name, _symbol)  {
         owner = msg.sender;
         network = _network;
         validator = _validator;
         homeBridge = _homeBridge;
         homeValidator = _homeValidator;
-        _setupDecimals(6);
     }
     
+    function decimals() public pure override returns (uint8) {
+        return 6;
+    }
+
     function newOwner(address _account) onlyBy(owner) public {
         owner = _account;
     }

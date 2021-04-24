@@ -5,9 +5,9 @@
 
 */
 
-pragma solidity ^0.6.0;
+pragma solidity ^0.8.0;
 
-import "./IRGEToken.sol";
+import "../IRGEToken.sol";
 
 import "./IRougeFactory.sol";
 
@@ -78,7 +78,7 @@ contract SimpleRougeCampaign {
     uint32 public acquired;
     uint32 public redeemed;
 
-    constructor(address payable _issuer, uint32 _issuance, address _rge, uint256 _tare, address _factory) public {
+    constructor(address payable _issuer, uint32 _issuance, address _rge, uint256 _tare, address _factory) {
         require(_issuance > 0);
 
         issuer = _issuer;
@@ -177,8 +177,8 @@ contract SimpleRougeCampaign {
         require(rgeBalance >= issuance * tare);
 
         // minimum campaign duration 12 hours, maximum 360 days (XXX could be a param for tare ?)
-        require(_campaignExpiration >= now + 60*60*12);
-        require(_campaignExpiration <= now + 60*60*24*360);
+        require(_campaignExpiration >= block.timestamp + 60*60*12);
+        require(_campaignExpiration <= block.timestamp + 60*60*24*360);
         
         name = _name;
         campaignIssued = true;
@@ -205,7 +205,7 @@ contract SimpleRougeCampaign {
 
     modifier CampaignOpen() {
         require(campaignIssued);
-        require(now < campaignExpiration);
+        require(block.timestamp < campaignExpiration);
         _;
     }
     
@@ -242,7 +242,7 @@ contract SimpleRougeCampaign {
         require(_hash == keccak256(abi.encodePacked('acceptAcquisition', this, msg.sender)));
         require(isAuthorized[_attestor][uint(Authorization.All)] || isAuthorized[_attestor][uint(Authorization.Acquisition)]);
         require(ecrecover(RougeCampaign.prefixed(_hash), v, r, s) == _attestor);
-        return acquisition(msg.sender);
+        return acquisition(payable(msg.sender));
     }
     
     function distributeNote(address payable _bearer) CampaignOpen isAttestor(Authorization.Acquisition) public returns (bool success) {
@@ -302,7 +302,7 @@ contract SimpleRougeCampaign {
         require(_hash == keccak256(abi.encodePacked('acceptRedemption', this, msg.sender)));
         require(isAuthorized[_attestor][uint(Authorization.All)] || isAuthorized[_attestor][uint(Authorization.Redemption)]);
         require(ecrecover(RougeCampaign.prefixed(_hash), v, r, s) == _attestor);
-        return redemption(msg.sender);
+        return redemption(payable(msg.sender));
     }
         
     function acceptRedemption(address payable _bearer, bytes32 _hash, uint8 v, bytes32 r, bytes32 s)

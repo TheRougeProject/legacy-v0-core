@@ -1,11 +1,12 @@
 
-const PrivateKeyProvider = require("truffle-privatekey-provider");
+const HDWalletProvider = require('@truffle/hdwallet-provider')
+
 
 module.exports = {
 
   compilers: {
     solc: {
-      version: "0.6.12",
+      version: "0.8.2",
       settings: {
         optimizer: {
           enabled: true,
@@ -30,7 +31,10 @@ module.exports = {
       //host: "https://sokol-trace.poa.network", //https://sokol.poa.network",
       host: "https://sokol.poa.network",
       port: 443,
-      provider: () => new PrivateKeyProvider(process.env.PKEY, "https://sokol.poa.network"),
+      provider: () => new HDWalletProvider({
+        privateKeys: [ process.env.PKEY ],
+        providerOrUrl: "https://sokol.poa.network",
+      }),
       network_id: 77,
     }
   }

@@ -5,9 +5,9 @@
 
 */
 
-pragma solidity ^0.6.0;
+pragma solidity ^0.8.0;
 
-import "./IRGEToken.sol";
+import "../IRGEToken.sol";
 
 contract RougeBridge {
     
@@ -22,7 +22,7 @@ contract RougeBridge {
 
     IRGEToken public rge;
 
-    constructor(address _rge) public {
+    constructor(address _rge) {
         owner = msg.sender;
         rge = IRGEToken(_rge);
     }

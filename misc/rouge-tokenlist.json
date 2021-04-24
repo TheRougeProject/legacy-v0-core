@@ -28,11 +28,22 @@
       "tags": [
         "voucher"
       ]
+    },
+    {
+      "chainId": 100,
+      "address": "0x01ffe9982CB900dA7b6Faa84fF06a2BF43a149cd",
+      "symbol": "RGE",
+      "name": "Rouge on xDAI",
+      "decimals": 6,
+      "logoURI": "https://rouge.network/logo-100.png",
+      "tags": [
+        "voucher"
+      ]
     }
   ],
   "version": {
     "major": 1,
-    "minor": 0,
-    "patch": 2
+    "minor": 1,
+    "patch": 1
   }
 }
