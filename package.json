@@ -44,7 +44,7 @@
     "@truffle/contract": "^4.3.14",
     "@truffle/hdwallet-provider": "^1.2.6",
     "release-it": "^14.2.1",
-    "truffle": "5.3.1"
+    "truffle": "5.7.1"
   },
   "dependencies": {
     "pify": "^5.0.0"
