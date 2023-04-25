@@ -1,7 +1,7 @@
 {
-  "name": "rouge-protocol-solidity",
+  "name": "legacy-v0-core",
   "version": "0.22.0",
-  "description": "Solidity contracts for the Rouge protocol (voucher, coupon, ticket, note on Ethereum)",
+  "description": "[DEPRECATED] Smart contracts and core libs for the Rouge Protocol V0",
   "main": "",
   "files": [
     "build",
@@ -21,7 +21,7 @@
     "Valentin D. Guillois <vdg@rouge.network>"
   ],
   "license": "AGPL-3.0-only",
-  "repository": "TheRougeProject/rouge-protocol-solidity",
+  "repository": "TheRougeProject/legacy-v0-core",
   "scripts": {
     "prepublish": "npm run build",
     "precommit": "npm run test",

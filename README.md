@@ -1,29 +1,13 @@
 # The Rouge Project - factory and campaign contracts
 
-> solidity contracts used by the Rouge protocol
+> solidity contracts used by the Rouge protocol V0
 
-The Rouge protocol is an open-source blockchain voucher and note
-protocol built as a suite of smart contracts using a specific token —
-the Rouge token — on Ethereum compatible blockchains (tested on
-Ethereum and POA).
+⚠ **DEPRECATED VERSION:** This version of the repository is no longer maintained and has been deprecated. Please refer to the updated [Rouge Protocol V2](https://github.com/TheRougeProject/v2-core). We strongly encourage you to use the latest version for improved functionality, bug fixes, and ongoing support.
 
-Rouge is for all types of usage of non-repudiable and unique usage
-digital vouchers (for example, e-tickets, e-coupons, cashback notes,
-etc).
-
-This package includes low-level implementation of the protocol
-in solidity.
-
-The Javascript [rouge.js](https://github.com/TheRougeProject/rouge.js)
-library, is a far simpler and recomended method to use the protocol
-than using these contracts directly.
-
-Please check out the [Rouge protocol docs](https://rouge.network/docs/).
 
 ## How to run tests :
 
 ``` bash
-cd rouge-protocol-solidity
 npm install
 npm run test
 ```
